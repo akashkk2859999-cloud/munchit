@@ -6,7 +6,7 @@
     "backend"
   ],
   "scripts": {
-    "build": "npm install -w frontend && npm run build -w frontend && npm install -w backend",
+    "build": "npm run build -w frontend",
     "start": "npm start -w backend"
   },
   "engines": {
