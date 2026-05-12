@@ -1,11 +1,13 @@
 {
   "name": "munchit-monorepo",
-  "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "install:all": "npm install --prefix frontend && npm install --prefix backend",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend",
-    "start": "npm start --prefix backend"
+    "build": "npm install -w frontend && npm run build -w frontend && npm install -w backend",
+    "start": "npm start -w backend"
   },
   "engines": {
     "node": ">=18"
