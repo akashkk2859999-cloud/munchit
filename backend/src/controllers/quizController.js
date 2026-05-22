@@ -1,3 +1,5 @@
+import { dbQuery } from '../config/db.js';
+
 export const submitQuiz = async (req, res, next) => {
   try {
     const { answers } = req.body;
@@ -7,9 +9,6 @@ export const submitQuiz = async (req, res, next) => {
       return res.status(400).json({ error: 'Answers are required' });
     }
 
-    // Since there are 7 questions, let's assume we get an object mapping Q# to Answer
-    // Example: { 1: 'A', 2: 'C', ... }
-    
     const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
     for (const key in answers) {
       const answer = answers[key];
@@ -33,9 +32,29 @@ export const submitQuiz = async (req, res, next) => {
       E: 'Hot Chilli'
     };
 
+    const primaryPersonality = personalities[primary];
+    const secondaryPersonality = counts[secondary] > 0 ? personalities[secondary] : null;
+
+    // Save submission to database (with try-catch for resilience)
+    try {
+      await dbQuery(
+        `INSERT INTO quiz_submissions (answers, primary_personality, secondary_personality) 
+         VALUES ($1, $2, $3)`,
+        [
+          JSON.stringify(answers),
+          primaryPersonality,
+          secondaryPersonality
+        ]
+      );
+      console.log('✅ Quiz submission saved to database successfully.');
+    } catch (dbError) {
+      // Graceful degradation: log error but do not crash the request
+      console.error('❌ Failed to save quiz submission to database:', dbError.message);
+    }
+
     res.json({
-      primaryPersonality: personalities[primary],
-      secondaryPersonality: counts[secondary] > 0 ? personalities[secondary] : null,
+      primaryPersonality,
+      secondaryPersonality,
       primaryKey: primary,
       secondaryKey: counts[secondary] > 0 ? secondary : null
     });
@@ -43,3 +62,4 @@ export const submitQuiz = async (req, res, next) => {
     next(error);
   }
 };
+

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/index.js';
+import db from './config/db.js'; // Ensure database pool is initialized
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

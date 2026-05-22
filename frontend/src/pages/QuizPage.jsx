@@ -31,7 +31,8 @@ const QuizPage = () => {
       // Submit quiz
       setIsSubmitting(true);
       try {
-        const response = await axios.post('http://localhost:5000/api/quiz/submit', { answers: newAnswers });
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.post(`${apiUrl}/api/quiz/submit`, { answers: newAnswers });
         navigate('/result', { state: { result: response.data, answers: newAnswers } });
       } catch (error) {
         console.error('Failed to submit quiz to backend', error);
