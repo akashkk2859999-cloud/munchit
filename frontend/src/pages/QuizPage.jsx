@@ -45,7 +45,7 @@ const QuizPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-munchit-yellow md:bg-[url('/images/personalities/g_d0_img_p7_1.png')] md:bg-cover md:bg-center md:bg-fixed flex flex-col items-center font-sans pb-6 md:py-10 relative">
+    <div className="min-h-screen bg-munchit-yellow md:bg-[url('/images/personalities/g_d0_img_p7_1.webp')] md:bg-cover md:bg-center md:bg-fixed flex flex-col items-center font-sans pb-6 md:py-10 relative">
       
       {/* Centered Desktop Container */}
       <div className="w-full max-w-3xl bg-munchit-yellow md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col flex-grow md:flex-grow-0 min-h-screen md:min-h-[80vh]">

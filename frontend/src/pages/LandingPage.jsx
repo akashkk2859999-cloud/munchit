@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 const personalities = [
-  { id: 1, image: '/images/personalities/img_p4_2.png', bg: 'bg-munchit-yellow' }, // Sassy Snack
-  { id: 2, image: '/images/personalities/img_p5_2.png', bg: 'bg-munchit-yellow' }, // Spicy Snack
-  { id: 3, image: '/images/personalities/img_p2_2.png', bg: 'bg-munchit-yellow' }, // Lovable Snack
-  { id: 4, image: '/images/personalities/img_p3_2.png', bg: 'bg-munchit-yellow' }, // Cheesy Snack
+  { id: 1, image: '/images/personalities/img_p4_2.webp', bg: 'bg-munchit-yellow' }, // Sassy Snack
+  { id: 2, image: '/images/personalities/img_p5_2.webp', bg: 'bg-munchit-yellow' }, // Spicy Snack
+  { id: 3, image: '/images/personalities/img_p2_2.webp', bg: 'bg-munchit-yellow' }, // Lovable Snack
+  { id: 4, image: '/images/personalities/img_p3_2.webp', bg: 'bg-munchit-yellow' }, // Cheesy Snack
 ];
 
 const LandingPage = () => {

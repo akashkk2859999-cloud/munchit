@@ -22,13 +22,14 @@ app.use(express.json());
 // API Routes
 app.use('/api', apiRoutes);
 
-// Static file serving for Frontend
-const frontendPath = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(frontendPath));
+// Health check endpoints
+app.get(['/', '/backend'], (req, res) => {
+  res.json({ status: 'online', message: 'MunchIt API is running' });
+});
 
-// Catch-all route to serve the frontend app
-app.get(/^(.*)$/, (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+// Catch-all for unmatched routes (returns a clean 404 instead of throwing ENOENT)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // Error boundary middleware

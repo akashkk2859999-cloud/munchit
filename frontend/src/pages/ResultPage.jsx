@@ -20,12 +20,12 @@ const getFallbackResult = (answers) => {
 
 const getPersonalityImage = (key) => {
   switch(key) {
-    case 'A': return '/images/personalities/img_p3_2.png'; // Cheesy Stix
-    case 'B': return '/images/personalities/img_p2_2.png'; // Sweet Surprise
-    case 'C': return '/images/personalities/img_p4_2.png'; // Sour Cream & Onion
-    case 'D': return '/images/personalities/img_p6_2.png'; // Creamy Crunch
-    case 'E': return '/images/personalities/img_p5_2.png'; // Hot Chilli
-    default: return '/images/personalities/img_p2_2.png';
+    case 'A': return '/images/personalities/img_p3_2.webp'; // Cheesy Stix
+    case 'B': return '/images/personalities/img_p2_2.webp'; // Sweet Surprise
+    case 'C': return '/images/personalities/img_p4_2.webp'; // Sour Cream & Onion
+    case 'D': return '/images/personalities/img_p6_2.webp'; // Creamy Crunch
+    case 'E': return '/images/personalities/img_p5_2.webp'; // Hot Chilli
+    default: return '/images/personalities/img_p2_2.webp';
   }
 };
 
