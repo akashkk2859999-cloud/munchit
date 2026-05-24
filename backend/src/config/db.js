@@ -59,6 +59,14 @@ async function initializeDatabase() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    
+    // Dynamically alter the table to add registration info if they don't exist
+    await dbQuery(`
+      ALTER TABLE quiz_submissions 
+      ADD COLUMN IF NOT EXISTS name TEXT,
+      ADD COLUMN IF NOT EXISTS phone_number TEXT
+    `);
+    
     console.log('✅ Database tables initialized (MunchIt)');
   } catch (error) {
     console.error('❌ Database migration error:', error.message);

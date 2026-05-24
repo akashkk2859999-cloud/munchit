@@ -2,7 +2,7 @@ import { dbQuery } from '../config/db.js';
 
 export const submitQuiz = async (req, res, next) => {
   try {
-    const { answers } = req.body;
+    const { answers, name, phoneNumber } = req.body;
     
     // answers is expected to be an array of objects or an object of { q1: 'A', q2: 'B', ... }
     if (!answers) {
@@ -38,12 +38,14 @@ export const submitQuiz = async (req, res, next) => {
     // Save submission to database (with try-catch for resilience)
     try {
       await dbQuery(
-        `INSERT INTO quiz_submissions (answers, primary_personality, secondary_personality) 
-         VALUES ($1, $2, $3)`,
+        `INSERT INTO quiz_submissions (answers, primary_personality, secondary_personality, name, phone_number) 
+         VALUES ($1, $2, $3, $4, $5)`,
         [
           JSON.stringify(answers),
           primaryPersonality,
-          secondaryPersonality
+          secondaryPersonality,
+          name || null,
+          phoneNumber || null
         ]
       );
       console.log('✅ Quiz submission saved to database successfully.');

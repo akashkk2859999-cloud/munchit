@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -10,7 +10,27 @@ const QuizPage = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verifiedUser, setVerifiedUser] = useState(null);
   const navigate = useNavigate();
+
+  // Enforce OTP verification before allowing participation
+  useEffect(() => {
+    const userStr = sessionStorage.getItem('verified_user');
+    if (!userStr) {
+      navigate('/');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(userStr);
+      if (!parsed.verified || !parsed.name || !parsed.phoneNumber) {
+        navigate('/');
+        return;
+      }
+      setVerifiedUser(parsed);
+    } catch (e) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -32,7 +52,11 @@ const QuizPage = () => {
       setIsSubmitting(true);
       try {
         const apiUrl = import.meta.env.VITE_API_URL || '';
-        const response = await axios.post(`${apiUrl}/api/quiz/submit`, { answers: newAnswers });
+        const response = await axios.post(`${apiUrl}/api/quiz/submit`, { 
+          answers: newAnswers,
+          name: verifiedUser?.name || 'Anonymous',
+          phoneNumber: verifiedUser?.phoneNumber || ''
+        });
         navigate('/result', { state: { result: response.data, answers: newAnswers } });
       } catch (error) {
         console.error('Failed to submit quiz to backend', error);
