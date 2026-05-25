@@ -19,11 +19,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// API Routes
-app.use('/api', apiRoutes);
+// API Routes (supports both direct access and corporate subpath proxying under /backend)
+app.use(['/api', '/backend/api'], apiRoutes);
 
 // Catch-all for unmatched API routes to prevent them from falling through to the frontend
-app.use('/api', (req, res) => {
+app.use(['/api', '/backend/api'], (req, res) => {
   res.status(404).json({ error: 'API route not found' });
 });
 

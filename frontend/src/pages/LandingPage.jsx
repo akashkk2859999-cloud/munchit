@@ -85,7 +85,7 @@ const LandingPage = () => {
     setError('');
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
       console.log('[OTP] Requesting send to:', phoneNumber);
       
       const response = await axios.post(`${apiUrl}/api/otp/send`, {
@@ -118,7 +118,7 @@ const LandingPage = () => {
     setError('');
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
       console.log('[OTP] Requesting verify for pinId:', pinId, 'with pin:', otpCode);
 
       const response = await axios.post(`${apiUrl}/api/otp/verify`, {
