@@ -22,14 +22,27 @@ app.use(express.json());
 // API Routes
 app.use('/api', apiRoutes);
 
+// Catch-all for unmatched API routes to prevent them from falling through to the frontend
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
+});
+
+// Serve static files from the React frontend build directory
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDistPath));
+
 // Health check endpoints
-app.get(['/', '/backend'], (req, res) => {
+app.get('/backend', (req, res) => {
   res.json({ status: 'online', message: 'MunchIt API is running' });
 });
 
-// Catch-all for unmatched routes (returns a clean 404 instead of throwing ENOENT)
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// Catch-all for React SPA routing - serves index.html for any unmatched non-API requests
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+    if (err) {
+      res.status(404).json({ error: 'Frontend build not found. Please build the frontend first.' });
+    }
+  });
 });
 
 // Error boundary middleware
