@@ -37,7 +37,7 @@ app.get('/backend', (req, res) => {
 });
 
 // Catch-all for React SPA routing - serves index.html for any unmatched non-API requests
-app.get('/*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
     if (err) {
       res.status(404).json({ error: 'Frontend build not found. Please build the frontend first.' });
