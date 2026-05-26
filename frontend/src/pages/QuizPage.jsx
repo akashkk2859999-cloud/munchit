@@ -623,7 +623,7 @@ const QuizPage = () => {
                         <span className="text-[9px] font-bold text-gray-600 leading-tight">
                           I confirm that I am 18 years of age or older, and agree to the{" "}
                           <a 
-                            href="https://munchit.ng/privacy" 
+                            href="https://munchit-ue.tolaram.com/privacy" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="underline text-[#00D2D3] font-black hover:text-teal-600 cursor-pointer"
@@ -632,7 +632,7 @@ const QuizPage = () => {
                           </a>{" "}
                           and{" "}
                           <a 
-                            href="https://munchit.ng/terms" 
+                            href="https://munchit-ue.tolaram.com/terms" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="underline text-[#00D2D3] font-black hover:text-teal-600 cursor-pointer"
