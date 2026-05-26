@@ -40,6 +40,24 @@ const LandingPage = () => {
     setIsLoading(true);
     setError('');
 
+    // Development bypass for fast local testing
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDev) {
+      setTimeout(() => {
+        setSuccess(true);
+        sessionStorage.setItem('verified_user', JSON.stringify({
+          name: name,
+          phoneNumber: phoneNumber,
+          verified: true
+        }));
+        setTimeout(() => {
+          setIsModalOpen(false);
+          navigate('/quiz');
+        }, 1000);
+      }, 500);
+      return;
+    }
+
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '/backend';
       console.log('[OTP] Requesting send to:', phoneNumber);
@@ -209,6 +227,16 @@ const LandingPage = () => {
 
               <button
                 onClick={() => {
+                  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                  if (isDev) {
+                    sessionStorage.setItem('verified_user', JSON.stringify({
+                      name: 'Developer Mode',
+                      phoneNumber: '08000000000',
+                      verified: true
+                    }));
+                    navigate('/quiz');
+                    return;
+                  }
                   setError('');
                   setIsModalOpen(true);
                 }}
