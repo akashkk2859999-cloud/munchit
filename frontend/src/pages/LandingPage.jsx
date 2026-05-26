@@ -238,7 +238,7 @@ const LandingPage = () => {
 
             {/* Headline Title */}
             <h1 
-              className="text-[2.6rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-14"
+              className="text-[2.6rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-4"
               style={{ 
                 textShadow: '-3.2px -3.2px 0 #fff, 3.2px -3.2px 0 #fff, -3.2px 3.2px 0 #fff, 3.2px 3.2px 0 #fff, 5px 5px 0px rgba(0,0,0,0.15)' 
               }}
@@ -248,7 +248,7 @@ const LandingPage = () => {
               <span className="block text-[3rem] my-1 leading-[0.9]">SNACK</span>
               <span className="block text-[2.8rem] leading-[0.9]">ARE YOU?</span>
             </h1>
-            <p className="mt-4 text-[10px] font-black text-[#0099FF] max-w-[245px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
+            <p className="mt-2 text-[10px] font-black text-[#0099FF] max-w-[245px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
               7 QUICK QUESTIONS<br/>ONE DANGEROUSLY ACCURATE RESULT
             </p>
           </div>
