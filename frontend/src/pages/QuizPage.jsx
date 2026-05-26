@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight, X, Phone, User, Shield, Check, AlertCircle } from 'lucide-react';
 import { questions } from '../data/quizData';
+import munchItLogo from '../assets/Munch It logo.png';
 
 const QuizPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -13,29 +14,152 @@ const QuizPage = () => {
   const [verifiedUser, setVerifiedUser] = useState(null);
   const navigate = useNavigate();
 
-  // Enforce OTP verification before allowing participation
+  // Participant Validation & OTP states (moved to after-quiz)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [pinId, setPinId] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [finalAnswers, setFinalAnswers] = useState(null);
+
+  // Initialize verifiedUser if already checked previously
   useEffect(() => {
     const userStr = sessionStorage.getItem('verified_user');
-    if (!userStr) {
-      navigate('/');
-      return;
-    }
-    try {
-      const parsed = JSON.parse(userStr);
-      if (!parsed.verified || !parsed.name || !parsed.phoneNumber) {
-        navigate('/');
-        return;
+    if (userStr) {
+      try {
+        const parsed = JSON.parse(userStr);
+        if (parsed.verified && parsed.name && parsed.phoneNumber) {
+          setVerifiedUser(parsed);
+          setName(parsed.name);
+          setPhoneNumber(parsed.phoneNumber);
+          setAgreed(true);
+        }
+      } catch (e) {
+        // ignore
       }
-      setVerifiedUser(parsed);
-    } catch (e) {
-      navigate('/');
     }
-  }, [navigate]);
+  }, []);
 
   const currentQuestion = questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   const handleOptionSelect = (optionId) => {
     setSelectedOption(optionId);
+  };
+
+  const getHighlightedText = (text) => {
+    const highlights = [
+      "your type of person",
+      "leaves you on read",
+      "broke",
+      "expensive plans",
+      "upsets you",
+      "single life content",
+      "fail",
+      "something shady"
+    ];
+    
+    let highlighted = text;
+    highlights.forEach(phrase => {
+      const regex = new RegExp(`(${phrase})`, 'gi');
+      highlighted = highlighted.replace(regex, `<span class="text-glow text-[#FFF200]">$1</span>`);
+    });
+    
+    return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  // Termii OTP Integration Handlers
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      setError('Please enter your phone number');
+      return;
+    }
+    if (!agreed) {
+      setError('You must agree to the Privacy Policy & Terms');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+      const response = await axios.post(`${apiUrl}/api/otp/send`, {
+        phoneNumber: phoneNumber
+      });
+
+      if (response.data && response.data.pinId) {
+        setPinId(response.data.pinId);
+        setOtpSent(true);
+      } else {
+        setError('Failed to dispatch verification code. Please check your number.');
+      }
+    } catch (err) {
+      console.error('[OTP] Send error:', err);
+      const serverMsg = err.response?.data?.error || 'Failed to send verification SMS. Try again.';
+      setError(serverMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!otpCode.trim() || otpCode.length < 4) {
+      setError('Please enter a valid 4-digit code');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+      const response = await axios.post(`${apiUrl}/api/otp/verify`, {
+        pinId: pinId,
+        pin: otpCode
+      });
+
+      if (response.data && response.data.success) {
+        setSuccess(true);
+        sessionStorage.setItem('verified_user', JSON.stringify({
+          name: name,
+          phoneNumber: phoneNumber,
+          verified: true
+        }));
+
+        // Submit quiz to backend
+        const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
+          answers: finalAnswers,
+          name: name,
+          phoneNumber: phoneNumber
+        });
+
+        setTimeout(() => {
+          setIsModalOpen(false);
+          navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+        }, 1500);
+      } else {
+        setError('Incorrect or expired verification code');
+      }
+    } catch (err) {
+      console.error('[OTP] Verification error:', err);
+      const serverMsg = err.response?.data?.error || 'Invalid PIN code. Please try again.';
+      setError(serverMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleContinue = async () => {
@@ -48,28 +172,45 @@ const QuizPage = () => {
       setSelectedOption(null);
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Submit quiz
-      setIsSubmitting(true);
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || '/backend';
-        const response = await axios.post(`${apiUrl}/api/quiz/submit`, { 
-          answers: newAnswers,
-          name: verifiedUser?.name || 'Anonymous',
-          phoneNumber: verifiedUser?.phoneNumber || ''
-        });
-        navigate('/result', { state: { result: response.data, answers: newAnswers } });
-      } catch (error) {
-        console.error('Failed to submit quiz to backend', error);
-        // Fallback for edge case resilience
-        navigate('/result', { state: { fallbackAnswers: newAnswers } });
-      } finally {
-        setIsSubmitting(false);
+      // Save answers for the verification submission
+      setFinalAnswers(newAnswers);
+      
+      // Check if user is already verified in sessionStorage
+      const storedUser = sessionStorage.getItem('verified_user');
+      let parsedUser = null;
+      if (storedUser) {
+        try {
+          parsedUser = JSON.parse(storedUser);
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      if (parsedUser && parsedUser.verified && parsedUser.name && parsedUser.phoneNumber) {
+        // User is already verified! Directly submit the quiz to backend
+        setIsSubmitting(true);
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+          const response = await axios.post(`${apiUrl}/api/quiz/submit`, { 
+            answers: newAnswers,
+            name: parsedUser.name,
+            phoneNumber: parsedUser.phoneNumber
+          });
+          navigate('/result', { state: { result: response.data, answers: newAnswers } });
+        } catch (error) {
+          console.error('Failed to submit quiz to backend', error);
+          navigate('/result', { state: { fallbackAnswers: newAnswers } });
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        // User needs validation! Open the participant registration / OTP verification modal
+        setIsModalOpen(true);
       }
     }
   };
 
   const handleSkip = () => {
-    // Pick a random option as a default answer to progress forward
     const randomOption = ['A', 'B', 'C', 'D', 'E'][Math.floor(Math.random() * 5)];
     handleOptionSelect(randomOption);
     setTimeout(() => {
@@ -77,49 +218,84 @@ const QuizPage = () => {
     }, 100);
   };
 
-  // Maps indexes to prefix emojis in options
-  const optionEmojis = {
-    0: '🔥',
-    1: '😎',
-    2: '👀',
-    3: '🤔',
-    4: '🤷‍♀️'
-  };
-
-  // Maps indexes to colorful sticker stamp text
-  const optionStamps = {
-    0: { text: "LET'S GO!", color: "bg-[#00D2D3] border-[#00B5B5] text-white" },
-    1: { text: "CHILL ✨", color: "bg-munchit-pink border-[#C9076E] text-white" },
-    2: { text: "100", color: "bg-munchit-red border-red-700 text-white" },
-    3: { text: "PERIODT.", color: "bg-[#0066CC] border-blue-800 text-white" },
-    4: { text: "SAY IT!", color: "bg-munchit-pink border-[#C9076E] text-white" }
-  };
+  // Emoji faces and stamp labels — each with unique rotation for organic sticker feel
+  const optionStyles = [
+    { 
+      emoji: '🔥', 
+      label: "LET'S GO!", 
+      labelBg: 'bg-[#00C9C9]', 
+      labelText: 'text-white',
+      labelBorder: 'border-[#00A5A5]',
+      rotation: '-6deg',
+      isEmoji: false,
+    },
+    { 
+      emoji: '😎', 
+      label: "CHILL ✨", 
+      labelBg: 'bg-[#E10B7E]', 
+      labelText: 'text-white',
+      labelBorder: 'border-[#C9076E]',
+      rotation: '5deg',
+      isEmoji: false,
+    },
+    { 
+      emoji: '👀', 
+      label: "💯", 
+      labelBg: '',
+      labelText: '',
+      labelBorder: '',
+      rotation: '0deg',
+      isEmoji: true,
+    },
+    { 
+      emoji: '🤔', 
+      label: "PERIODT.", 
+      labelBg: 'bg-[#0066CC]', 
+      labelText: 'text-white',
+      labelBorder: 'border-[#004C99]',
+      rotation: '-3deg',
+      isEmoji: false,
+    },
+    { 
+      emoji: '🤷‍♀️', 
+      label: "SAY IT!", 
+      labelBg: 'bg-[#E10B7E]', 
+      labelText: 'text-white',
+      labelBorder: 'border-[#C9076E]',
+      rotation: '7deg',
+      isEmoji: false,
+    }
+  ];
 
   return (
     <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
       
-      {/* ── BACKGROUND AMBIENT EFFECTS (Desktop only) ── */}
+      {/* ── Desktop ambient glow ── */}
       <div className="hidden md:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-munchit-yellow/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* ── PHONE CONTAINER SIMULATOR ── */}
+      {/* ── PHONE CONTAINER ── */}
       <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300">
         
-        {/* Phone Notch (Desktop simulator only) */}
+        {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
-        {/* ── APP CANVAS ── */}
-        <div className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden p-6 pt-12 md:pt-14 pb-8 select-none">
+        {/* ── APP CANVAS — reduced padding to fill screen ── */}
+        <div className="flex-1 flex flex-col h-full relative overflow-y-auto overflow-x-hidden px-4 pt-6 md:pt-10 pb-4 select-none scrollbar-none">
           
-          {/* ── TOP HEADER / QUIZ PROGRESS ── */}
-          <div className="flex justify-between items-center w-full mb-6 relative">
+          {/* ── TOP HEADER ── */}
+          <div className="flex justify-between items-center w-full mb-2 relative z-10">
             {/* Logo */}
-            <div className="font-display font-black text-2xl tracking-tighter text-munchit-red transform -rotate-3" style={{ textShadow: '2px 2px 0px #FFF' }}>
-              MUNCH <span className="text-black bg-white px-1 py-0.5 rounded text-sm border border-munchit-red">IT</span>
+            <div className="relative h-9 flex items-center">
+              <img 
+                src={munchItLogo} 
+                alt="MUNCH IT Logo" 
+                className="h-full w-auto object-contain select-none pointer-events-none filter drop-shadow-sm" 
+              />
             </div>
             
-            {/* Question Pill */}
-            <div className="bg-[#00D2D3] border-2 border-white shadow-[2px_2px_0_0_#000] text-white px-4 py-1.5 rounded-full font-display font-black text-xs uppercase tracking-wider">
+            {/* Question Counter Pill — GREEN/TEAL like client ref */}
+            <div className="bg-[#00C9C9] border-2 border-[#00A5A5] shadow-[2px_2px_0_0_#000] text-white px-4 py-1.5 rounded-full font-display font-black text-[11px] uppercase tracking-wider">
               QUESTION {currentQuestionIndex + 1}/{questions.length}
             </div>
           </div>
@@ -133,120 +309,172 @@ const QuizPage = () => {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center justify-center flex-grow py-20 text-center"
               >
-                {/* Custom Mascot loader */}
+                {/* Animated loader */}
                 <div className="relative flex items-center justify-center mb-6">
-                  <div className="w-16 h-16 border-8 border-black/10 border-t-munchit-red rounded-full animate-spin"></div>
-                  <span className="absolute text-2xl animate-bounce">🥜</span>
+                  <div className="w-20 h-20 border-[6px] border-black/10 border-t-munchit-red rounded-full animate-spin"></div>
+                  <span className="absolute text-3xl animate-bounce">🥜</span>
                 </div>
-                <h2 className="text-2xl font-display font-black text-black tracking-tight uppercase">Analyzing your Vibe...</h2>
-                <p className="text-xs font-bold text-black/60 uppercase mt-2">Reading the snack database...</p>
+                <h2 className="text-2xl font-display font-black text-black tracking-tight uppercase mb-1">
+                  Analyzing your Vibe...
+                </h2>
+                <p className="text-[11px] font-bold text-black/50 uppercase tracking-widest">
+                  Reading the snack database...
+                </p>
               </motion.div>
             ) : (
               <motion.div
                 key={currentQuestion.id}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-col flex-grow w-full"
+                initial={{ opacity: 0, x: 60, scale: 0.98 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -60, scale: 0.98 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="flex flex-col flex-1 w-full justify-between h-[calc(100%-3.5rem)] min-h-[450px]"
               >
                 
-                {/* ── MASCOT PROGRESS BAR ── */}
-                <div className="w-full relative mb-8">
-                  {/* Outer track */}
-                  <div className="bg-black/10 rounded-full h-4 border border-black/5 flex items-center px-1 relative w-full overflow-hidden">
-                    {/* Inner progress fill */}
+                {/* ── TOP GROUP (PROGRESS & QUESTION) ── */}
+                <div className="w-full flex flex-col">
+                  
+                  {/* ── PROGRESS BAR — centered, 65% width, with peanut tracking ── */}
+                  <div className="mx-auto w-[65%] max-w-[240px] relative mb-4 flex items-center h-8">
+                    {/* Track */}
+                    <div className="bg-[#E0F2F1] rounded-full h-4 w-full overflow-hidden relative border border-black/10">
+                      {/* Vibrant Green Progress Fill */}
+                      <motion.div 
+                        className="bg-[#00E676] rounded-full h-full"
+                        initial={{ width: `${((currentQuestionIndex) / questions.length) * 100}%` }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                      />
+                    </div>
+                    {/* Peanut tracking sticker */}
+                    <motion.div 
+                      className="absolute top-1/2 -translate-y-1/2 z-10 text-xl pointer-events-none select-none"
+                      initial={{ left: `${((currentQuestionIndex) / questions.length) * 100}%` }}
+                      animate={{ left: `calc(${progress}% - 14px)` }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      🥜
+                    </motion.div>
+                  </div>
+
+                  {/* ── QUESTION CARD — Narrower, tighter, dynamic height with right-edge centered emoji ── */}
+                  <div className="relative mb-2 px-12">
+                    {/* Curly hand-drawn pink arrow pointing and touching the sticker — mathematically aligned to connect perfectly */}
+                    <svg className="absolute right-0 -top-10 w-16 h-16 text-pink-500 pointer-events-none z-25" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="8.5" strokeLinecap="round">
+                      <path d="M 30,50 C 45,10 85,20 80,100" />
+                      <path d="M 64,85 L 80,100 L 86,82" />
+                    </svg>
+
+                    {/* Cute skeptical emoji sticker with white bg and neon green border — positioned exactly on the right border, fixed top-6 for perfect alignment */}
+                    <motion.div 
+                      className="absolute right-2 top-6 z-30 bg-white border-4 border-[#00E676] rounded-full w-16 h-16 flex items-center justify-center shadow-xl"
+                      style={{ rotate: '12deg' }}
+                      animate={{ rotate: [12, 16, 8, 12] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <span className="text-3xl select-none">🙄</span>
+                    </motion.div>
+
+                    {/* Top-Left Masking Tape Sticker */}
                     <div 
-                      className="bg-[#00E676] rounded-full h-2 transition-all duration-300"
-                      style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                      className="absolute left-[36px] -top-2 w-11 h-4 bg-white/40 backdrop-blur-[1px] border border-white/20 shadow-[1px_1px_2px_rgba(0,0,0,0.06)] z-20 pointer-events-none select-none"
+                      style={{ transform: 'rotate(-30deg)' }}
                     />
-                  </div>
-                  {/* Gliding Peanut Mascot */}
-                  <div 
-                    className="absolute -top-1 w-6 h-6 flex items-center justify-center text-xl transition-all duration-300 select-none pointer-events-none"
-                    style={{ 
-                      left: `calc(${((currentQuestionIndex + 1) / questions.length) * 100}% - 14px)` 
-                    }}
-                  >
-                    🥜
+
+                    {/* Bottom-Right Masking Tape Sticker */}
+                    <div 
+                      className="absolute right-[36px] bottom-1 w-11 h-4 bg-white/40 backdrop-blur-[1px] border border-white/20 shadow-[1px_1px_2px_rgba(0,0,0,0.06)] z-20 pointer-events-none select-none"
+                      style={{ transform: 'rotate(-32deg)' }}
+                    />
+
+                    {/* Dark torn-edge paper card — dynamic height to fit text tightly and prevent empty gaps */}
+                    <div 
+                      className="bg-gray-900 border-[3px] border-black px-6 pt-7 pb-12 shadow-[4px_4px_0_0_#000] relative flex flex-col justify-center text-center"
+                      style={{
+                        clipPath: "polygon(0% 0%, 100% 0%, 100% 87%, 97% 90%, 94% 86%, 90% 89%, 87% 85%, 84% 88%, 81% 85%, 78% 88%, 74% 85%, 71% 89%, 68% 86%, 65% 89%, 62% 85%, 59% 88%, 55% 85%, 52% 89%, 49% 86%, 46% 89%, 43% 85%, 40% 88%, 36% 85%, 33% 89%, 30% 86%, 27% 89%, 24% 85%, 21% 88%, 17% 85%, 14% 89%, 11% 86%, 8% 89%, 5% 85%, 0% 88%)"
+                      }}
+                    >
+                      <h2 className="text-[17px] md:text-[19px] text-white font-display font-black leading-[1.25] uppercase tracking-normal">
+                        {getHighlightedText(currentQuestion.text)}
+                      </h2>
+                    </div>
                   </div>
                 </div>
 
-                {/* ── TORN PAPER QUESTION CARD ── */}
-                <div className="relative mb-6">
-                  {/* Thinking sticker overlap */}
-                  <div className="absolute -top-5 -right-3 z-20 transform rotate-12 text-4xl hover:scale-110 transition-transform">
-                    🤔
-                  </div>
-                  {/* Ripped-edge polygon paper container */}
-                  <div 
-                    className="bg-white border-2 border-black p-6 pt-8 pb-10 shadow-[4px_4px_0_0_#000] relative"
-                    style={{
-                      clipPath: "polygon(0% 0%, 100% 0%, 100% 92%, 97% 90%, 94% 93%, 90% 90%, 87% 92%, 84% 89%, 81% 91%, 78% 89%, 74% 92%, 71% 90%, 68% 92%, 65% 89%, 62% 91%, 59% 89%, 55% 93%, 52% 90%, 49% 92%, 46% 89%, 43% 91%, 40% 89%, 36% 92%, 33% 90%, 30% 92%, 27% 89%, 24% 91%, 21% 89%, 17% 92%, 14% 90%, 11% 92%, 8% 89%, 5% 91%, 0% 89%)"
-                    }}
-                  >
-                    <h2 className="text-xl md:text-2xl text-black font-display font-black leading-snug uppercase tracking-tight text-center">
-                      {currentQuestion.text}
-                    </h2>
-                  </div>
-                </div>
+                {/* No separator — options flow directly below the question like client ref */}
 
-                {/* ── OPTION CARDS ── */}
-                <div className="space-y-3.5 mb-8 flex-grow flex flex-col justify-center">
+                {/* ── OPTION CARDS — slightly narrower, taller height ── */}
+                <div className="space-y-2 mb-2 flex flex-col justify-start px-6 w-full">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = selectedOption === option.id;
-                    const stamp = optionStamps[idx];
+                    const style = optionStyles[idx];
                     return (
-                      <button
+                      <motion.button
                         key={option.id}
                         onClick={() => handleOptionSelect(option.id)}
-                        className={`w-full text-left px-5 py-4.5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between relative group ${
+                        whileTap={{ scale: 0.97 }}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.06, duration: 0.2 }}
+                        className={`w-full text-left pl-3.5 pr-14 py-5 rounded-2xl border-2 transition-all duration-150 flex items-center gap-3 relative group ${
                           isSelected 
-                            ? 'border-munchit-red bg-white text-black shadow-[4px_4px_0_0_#E30613] transform scale-[1.02]' 
-                            : 'border-black/10 bg-white hover:bg-gray-50 text-gray-800 hover:border-black/20 shadow-[2px_2px_0_0_rgba(0,0,0,0.05)]'
+                            ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.02] z-10' 
+                            : 'bg-white border-[#00E676] hover:bg-white text-gray-800 shadow-sm'
                         }`}
                       >
-                        {/* Emoji prefix & text */}
-                        <div className="flex items-center gap-3.5 pr-4 flex-1">
-                          <span className="text-2xl filter drop-shadow">{optionEmojis[idx]}</span>
-                          <span className="font-sans font-extrabold text-xs md:text-sm tracking-tight leading-snug uppercase">
-                            {option.text}
-                          </span>
-                        </div>
+                        {/* Plain floating emoji prefix — no circular background */}
+                        <span className="text-3xl select-none flex-shrink-0 filter drop-shadow-sm">
+                          {style.emoji}
+                        </span>
 
-                        {/* Stamp Label Stamp */}
-                        <div 
-                          className={`flex-shrink-0 border border-black px-2.5 py-1 rounded-lg text-[9px] font-display font-black uppercase tracking-wider transform group-hover:scale-105 transition-all shadow-[1px_1px_0_0_#000] rotate-3 ${stamp.color}`}
-                        >
-                          {stamp.text}
+                        {/* Option text */}
+                        <span className="font-display font-black text-[11px] tracking-tight leading-snug uppercase text-gray-900 flex-1 pr-1">
+                          {option.text}
+                        </span>
+
+                        {/* Stamp label — absolute positioned to hang off the right edge */}
+                        <div className="absolute -right-[18px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                          {style.isEmoji ? (
+                            <span className="text-2xl select-none" style={{ transform: `rotate(${style.rotation})` }}>
+                              {style.label}
+                            </span>
+                          ) : (
+                            <div 
+                              className={`border-2 ${style.labelBorder} ${style.labelBg} ${style.labelText} px-2.5 py-0.5 rounded-lg text-[9px] font-display font-black uppercase tracking-wider shadow-[1px_1px_0_0_rgba(0,0,0,0.15)]`}
+                              style={{ transform: `rotate(${style.rotation})` }}
+                            >
+                              {style.label}
+                            </div>
+                          )}
                         </div>
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
 
                 {/* ── FOOTER NAVIGATION ── */}
-                <div className="mt-auto flex items-center justify-between w-full pt-4 border-t border-black/5 relative z-10">
-                  {/* Skip button */}
+                <div className="flex items-center justify-between w-full pt-3 relative z-10">
+                  {/* Skip */}
                   <button
                     onClick={handleSkip}
-                    className="font-display font-black text-lg text-munchit-red hover:text-red-700 uppercase tracking-widest active:scale-95 transition-all"
+                    className="font-display font-black text-2xl text-munchit-red hover:text-red-700 uppercase tracking-wider active:scale-95 transition-all"
                   >
                     SKIP
                   </button>
 
-                  {/* Circular circular arrow continue */}
-                  <button
+                  {/* Continue circle button — solid crimson red like reference */}
+                  <motion.button
                     onClick={handleContinue}
                     disabled={!selectedOption}
-                    className={`rounded-full p-4.5 border-2 border-white shadow-[3px_3px_0_0_#000] transition-all flex items-center justify-center ${
+                    whileTap={selectedOption ? { scale: 0.9, y: 2 } : {}}
+                    className={`rounded-full w-14 h-14 transition-all flex items-center justify-center shadow-lg ${
                       selectedOption 
-                        ? 'bg-munchit-red hover:bg-red-700 text-white active:translate-y-0.5 active:shadow-[1px_1px_0_0_#000]' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none border-gray-400'
+                        ? 'bg-[#E30613] hover:bg-red-700 text-white active:scale-95' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    <ArrowRight size={24} strokeWidth={3} className="text-white" />
-                  </button>
+                    <ArrowRight size={26} strokeWidth={4} className="text-white" />
+                  </motion.button>
                 </div>
 
               </motion.div>
@@ -254,6 +482,255 @@ const QuizPage = () => {
           </AnimatePresence>
 
         </div>
+
+        {/* ── VERIFICATION PROMPT OVERLAY (If modal closed but final answers ready) ── */}
+        {finalAnswers && !isModalOpen && !success && (
+          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-6 text-center z-45">
+            <div className="bg-white border-4 border-munchit-red rounded-[2rem] p-6 max-w-xs shadow-2xl relative">
+              <div className="text-4xl mb-3 animate-bounce">🔮</div>
+              <h3 className="text-xl font-display font-black text-black uppercase mb-1">
+                YOUR VIBE IS READY!
+              </h3>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 leading-normal">
+                Verify your phone number to reveal your Munch It snack personality.
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="w-full bg-[#00D2D3] hover:bg-[#00B5B5] text-white font-display font-black py-3 px-6 rounded-full uppercase tracking-wider border-2 border-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none"
+              >
+                VERIFY NOW
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PARTICIPANT VALIDATION MODAL ── */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto"
+            >
+              <motion.div
+                initial={{ scale: 0.85, y: 40, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.85, y: 40, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl relative border-4 border-munchit-red flex flex-col my-auto max-h-[90%]"
+              >
+                {/* Top Banner */}
+                <div className="bg-munchit-red text-white py-4 px-5 relative flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Shield className="text-munchit-yellow w-5 h-5 animate-pulse" />
+                    <span className="font-display font-black text-sm tracking-wider uppercase">PARTICIPANT VALIDATION</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-colors"
+                    aria-label="Close"
+                  >
+                    <X size={16} strokeWidth={3} />
+                  </button>
+                </div>
+
+                {/* Main Body */}
+                <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-3.5">
+                  {/* Error Banner */}
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-50 text-red-600 p-3 rounded-xl flex items-start gap-2 text-[11px] font-bold border border-red-200"
+                    >
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+
+                  {/* Successful State */}
+                  {success ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center flex-grow">
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                        className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 border-2 border-green-500"
+                      >
+                        <Check className="text-green-600 w-10 h-10" strokeWidth={3.5} />
+                      </motion.div>
+                      <h3 className="text-2xl font-display font-black text-gray-800 mb-1">VIBE UNLOCKED! 🎉</h3>
+                      <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">Generating your personality...</p>
+                    </div>
+                  ) : !otpSent ? (
+                    /* Form State: Entering Name & Phone */
+                    <form onSubmit={handleSendOtp} className="space-y-3.5 flex flex-col flex-1">
+                      <p className="text-gray-600 font-bold text-[11px] leading-relaxed uppercase tracking-wide">
+                        Enter your details to register and verify your number. You will receive a quick verification code via SMS.
+                      </p>
+
+                      {/* Name input */}
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                          <User size={16} />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Your Full Name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 font-bold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D2D3] focus:border-transparent focus:bg-white transition-all text-xs"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      {/* Phone Number Input */}
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                          <Phone size={16} />
+                        </div>
+                        <input
+                          type="tel"
+                          placeholder="Phone Number (e.g. 08031234567)"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 font-bold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D2D3] focus:border-transparent focus:bg-white transition-all text-xs"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      {/* Agree Checkbox with clickable links inside */}
+                      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                        <div className="relative flex items-center mt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="sr-only"
+                            disabled={isLoading}
+                          />
+                          <div className={`w-4 h-4 rounded border-2 transition-all flex items-center justify-center ${
+                            agreed 
+                              ? 'bg-[#00D2D3] border-[#00D2D3] text-white' 
+                              : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}>
+                            {agreed && <Check size={10} strokeWidth={4} />}
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-bold text-gray-600 leading-tight">
+                          I confirm that I am 18 years of age or older, and agree to the{" "}
+                          <a 
+                            href="https://munchit.ng/privacy" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline text-[#00D2D3] font-black hover:text-teal-600 cursor-pointer"
+                          >
+                            Privacy Policy
+                          </a>{" "}
+                          and{" "}
+                          <a 
+                            href="https://munchit.ng/terms" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline text-[#00D2D3] font-black hover:text-teal-600 cursor-pointer"
+                          >
+                            Terms and Conditions
+                          </a>.
+                        </span>
+                      </label>
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className={`w-full font-display font-black text-sm uppercase rounded-full py-3 px-6 transition-all flex items-center justify-center gap-2 ${
+                          isLoading
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                            : 'bg-[#00D2D3] hover:bg-[#00B5B5] text-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none border-2 border-white'
+                        }`}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                            <span>SENDING...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <span>Send OTP</span>
+                            <ArrowRight size={16} strokeWidth={3.5} />
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    /* OTP State: Verifying */
+                    <form onSubmit={handleVerifyOtp} className="space-y-4 text-center">
+                      <p className="text-gray-600 font-bold text-[11px] uppercase leading-tight">
+                        An SMS OTP has been sent to <span className="font-black text-gray-800">{phoneNumber}</span>. Enter the 4-digit PIN below.
+                      </p>
+
+                      {/* OTP Input */}
+                      <div className="max-w-[160px] mx-auto">
+                        <input
+                          type="text"
+                          maxLength="4"
+                          placeholder="• • • •"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          className="w-full text-center tracking-[0.5em] font-black text-2xl border-2 border-gray-300 rounded-xl py-3 focus:outline-none focus:border-[#00D2D3] transition-all bg-gray-50 font-display"
+                          disabled={isLoading}
+                          autoFocus
+                          required
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="submit"
+                          disabled={isLoading}
+                          className={`w-full font-display font-black text-sm uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 ${
+                            isLoading
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                              : 'bg-munchit-red hover:bg-red-700 text-white shadow-[0_4px_0_0_#9E040C] active:translate-y-0.5 active:shadow-none border-2 border-white'
+                          }`}
+                        >
+                          {isLoading ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                              <span>VERIFYING...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <span>VERIFY & VIEW RESULT</span>
+                              <Check size={16} strokeWidth={3.5} />
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOtpSent(false);
+                            setOtpCode('');
+                            setError('');
+                          }}
+                          disabled={isLoading}
+                          className="text-[10px] font-black text-gray-400 hover:text-gray-600 mt-1 transition-colors disabled:opacity-50 uppercase tracking-wider"
+                        >
+                          ← CHANGE DETAILS
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

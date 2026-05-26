@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Phone, User, Shield, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, X, Phone, User, Shield, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import munchItLogo from '../assets/Munch It logo.png';
+import modeellls from '../assets/modeellls.png';
+import element1 from '../assets/element1.png';
+import element2 from '../assets/element2.png';
+import element3 from '../assets/element3.png';
+import element4 from '../assets/element4.png';
+import cheesySnack from '../assets/cheesy_snack.png';
+import lovableSnack from '../assets/lovable_snack.png';
+import sassySnack from '../assets/sassy_snack.png';
+import smoothSnack from '../assets/smooth_snack.png';
+import spicySnack from '../assets/spicy_snack.png';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -20,6 +31,19 @@ const LandingPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Floating particles
+  const [particles] = useState(
+    Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 8 + 4,
+      delay: Math.random() * 3,
+      duration: Math.random() * 4 + 3,
+      emoji: ['🔥', '⚡', '✨', '🥜', '💥', '👑', '🎯', '💫', '🌟', '😎', '🤩', '🎉'][i]
+    }))
+  );
 
   // Termii OTP API Integration Handlers
   const handleSendOtp = async (e) => {
@@ -40,28 +64,9 @@ const LandingPage = () => {
     setIsLoading(true);
     setError('');
 
-    // Development bypass for fast local testing
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isDev) {
-      setTimeout(() => {
-        setSuccess(true);
-        sessionStorage.setItem('verified_user', JSON.stringify({
-          name: name,
-          phoneNumber: phoneNumber,
-          verified: true
-        }));
-        setTimeout(() => {
-          setIsModalOpen(false);
-          navigate('/quiz');
-        }, 1000);
-      }, 500);
-      return;
-    }
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '/backend';
-      console.log('[OTP] Requesting send to:', phoneNumber);
-      
       const response = await axios.post(`${apiUrl}/api/otp/send`, {
         phoneNumber: phoneNumber
       });
@@ -93,8 +98,6 @@ const LandingPage = () => {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '/backend';
-      console.log('[OTP] Requesting verify for pinId:', pinId, 'with pin:', otpCode);
-
       const response = await axios.post(`${apiUrl}/api/otp/verify`, {
         pinId: pinId,
         pin: otpCode
@@ -102,7 +105,6 @@ const LandingPage = () => {
 
       if (response.data && response.data.success) {
         setSuccess(true);
-        // Persist verified user details in sessionStorage
         sessionStorage.setItem('verified_user', JSON.stringify({
           name: name,
           phoneNumber: phoneNumber,
@@ -125,6 +127,10 @@ const LandingPage = () => {
     }
   };
 
+  const handleStartQuiz = () => {
+    navigate('/quiz');
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
       
@@ -133,138 +139,172 @@ const LandingPage = () => {
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── PHONE CONTAINER SIMULATOR ── */}
-      <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300">
+      <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300 relative">
         
         {/* Phone Notch/Dynamic Island (Desktop simulator only) */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
+        {/* ── Floating Emoji Particles ── */}
+        {particles.map((p) => (
+          <motion.div
+            key={p.id}
+            className="absolute z-30 pointer-events-none select-none opacity-30"
+            style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: `${p.size + 8}px` }}
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 10, -10, 0],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{
+              duration: p.duration,
+              repeat: Infinity,
+              delay: p.delay,
+              ease: "easeInOut"
+            }}
+          >
+            {p.emoji}
+          </motion.div>
+        ))}
+
         {/* ── APP CANVAS ── */}
-        <div className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden p-6 pt-12 md:pt-14 pb-8 select-none">
+        <div className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden select-none">
           
-          {/* ── TOP NAV BAR ── */}
-          <div className="flex justify-between items-center w-full mb-6">
-            {/* Custom Premium MUNCH IT Logo */}
-            <div className="font-display font-black text-3xl tracking-tighter text-munchit-red transform -rotate-3 select-none flex flex-col leading-none" style={{ textShadow: '2px 2px 0px #FFF' }}>
-              <span className="text-[10px] text-black font-sans font-bold tracking-widest leading-none mb-0.5 self-start">KELLOGG'S</span>
-              <span className="flex items-center">
-                MUNCH
-                <span className="text-black ml-1 bg-white px-1.5 py-0.5 rounded text-lg leading-none border-2 border-munchit-red">IT</span>
-              </span>
+          {/* ── TOP BRAND BAR ── */}
+          <div className="flex justify-between items-center w-full px-5 pt-10 md:pt-12 pb-2 relative z-20">
+            {/* MUNCH IT Logo */}
+            <div className="relative h-12 flex items-center">
+              <img 
+                src={munchItLogo} 
+                alt="MUNCH IT Logo" 
+                className="h-full w-auto object-contain select-none pointer-events-none filter drop-shadow-sm" 
+              />
             </div>
             
-            {/* Hamburger / Info Button */}
+            {/* Hamburger Button */}
             <button 
-              onClick={() => alert("Munch It Personality Quiz - V1.5") }
-              className="bg-munchit-red border-2 border-white shadow-[2px_2px_0_0_#000] active:translate-y-0.5 active:shadow-[1px_1px_0_0_#000] text-white rounded-full p-2.5 transition-all"
+              onClick={() => alert("Munch It Personality Quiz — V2.0") }
+              className="bg-[#0099FF] text-[#FFF200] rounded-full w-10 h-10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              aria-label="Menu"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           </div>
 
-          {/* ── FLOATERS & STICKERS ── */}
-          {/* Flame Icon */}
-          <div className="absolute top-[180px] left-[8%] z-20 transform -rotate-12 animate-bounce">
-            <span className="text-4xl">🔥</span>
-          </div>
-          {/* Crown Icon */}
-          <div className="absolute top-[110px] right-[12%] z-20 transform rotate-12 animate-pulse">
-            <span className="text-3xl">👑</span>
-          </div>
+          {/* ── HEADLINE SECTION ── */}
+          <div className="px-5 mt-2 mb-1 relative z-10 text-center flex flex-col items-center">
+            
+            {/* Styled outline drawings & stickers */}
+            {/* Element 3: Fire Sticker (Top-Left) */}
+            <motion.img 
+              src={element3} 
+              alt="Fire Sticker" 
+              className="absolute top-6 left-2 z-20 w-[95px] object-contain drop-shadow-md select-none pointer-events-none"
+              animate={{ y: [0, -3, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+            />
 
-          {/* Sticker 1: "NO LIE, THIS QUIZ IS TOO ACCURATE 😭" */}
-          <div className="absolute top-[138px] left-[5%] z-20 bg-black border-2 border-white text-white px-3 py-1.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-tight shadow-md transform -rotate-6 flex items-center gap-1.5">
-            <span>NO LIE, THIS QUIZ IS TOO ACCURATE</span>
-            <span className="text-sm">😭</span>
-          </div>
+            {/* Yellow Crown SVG (Top-Right) */}
+            <motion.div
+              className="absolute top-6 right-8 z-20 w-12 h-12 text-[#FFF200]"
+              animate={{ rotate: [-6, 6, -6], scale: [1, 1.05, 1] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full drop-shadow-sm">
+                <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+                <path d="M3 20h18" strokeWidth="3.5" />
+              </svg>
+            </motion.div>
 
-          {/* Sticker 2: "my result was insaneee! 🤪" */}
-          <div className="absolute top-[225px] right-[4%] z-20 bg-munchit-pink border-2 border-white text-white px-3 py-1.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-tight shadow-md transform rotate-6 flex items-center gap-1">
-            <span>my result was insaneee!</span>
-            <span className="text-sm">🤪</span>
-          </div>
+            {/* Float-animated speech bubble stickers — adjusted to prevent text overlapping */}
+            {/* Element 1: Black Speech Bubble (Moved down left side) */}
+            <motion.img 
+              src={element1} 
+              alt="No Lie Sticker" 
+              className="absolute top-[58%] left-[2px] z-20 w-[80px] object-contain drop-shadow-md select-none pointer-events-none"
+              animate={{ rotate: [-6, -2, -6], y: [0, -3, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
 
-          {/* Sticker 3: "I feel so attacked 💀" */}
-          <div className="absolute top-[280px] right-[8%] z-20 bg-[#00D2D3] border-2 border-white text-white px-3 py-1.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-tight shadow-md transform -rotate-6 flex items-center gap-1">
-            <span>I feel so attacked</span>
-            <span className="text-sm">💀</span>
-          </div>
+            {/* Element 2: Pink Speech Bubble */}
+            <motion.img 
+              src={element2} 
+              alt="My Result Sticker" 
+              className="absolute top-[12%] right-[2px] z-20 w-[78px] object-contain drop-shadow-md select-none pointer-events-none"
+              animate={{ rotate: [4, 8, 4], y: [0, 3, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+            />
 
-          {/* ── HERO HEADER ── */}
-          <div className="mt-8 mb-6 relative z-10 text-center flex flex-col items-center">
-            <h1 className="text-4xl md:text-5xl font-black text-munchit-red leading-none font-display uppercase tracking-tighter transform -rotate-2 drop-shadow-sm select-none" style={{ textShadow: '3px 3px 0px #FFF, 5px 5px 0px rgba(0,0,0,0.1)' }}>
+            {/* Headline Title */}
+            <h1 
+              className="text-[2.6rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-14"
+              style={{ 
+                textShadow: '-3.2px -3.2px 0 #fff, 3.2px -3.2px 0 #fff, -3.2px 3.2px 0 #fff, 3.2px 3.2px 0 #fff, 5px 5px 0px rgba(0,0,0,0.15)' 
+              }}
+            >
               WHICH
-              <span className="block text-5xl md:text-6xl text-black my-1 font-black">MUNCH IT</span>
-              SNACK ARE YOU?
+              <span className="block text-[3.4rem] my-1 font-black leading-[0.9]">MUNCH IT</span>
+              <span className="block text-[3rem] my-1 leading-[0.9]">SNACK</span>
+              <span className="block text-[2.8rem] leading-[0.9]">ARE YOU?</span>
             </h1>
-            <p className="mt-3 text-xs md:text-sm font-extrabold text-black/80 max-w-[280px] leading-tight tracking-wide uppercase">
-              7 QUICK QUESTIONS.<br />ONE DANGEROUSLY ACCURATE RESULT.
+            <p className="mt-4 text-[10px] font-black text-[#0099FF] max-w-[245px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
+              7 QUICK QUESTIONS<br/>ONE DANGEROUSLY ACCURATE RESULT
             </p>
           </div>
 
-          {/* ── MAIN GROUP INFLUENCERS GRAPHIC ── */}
-          <div className="flex-1 flex items-center justify-center min-h-[220px] relative my-2 z-0">
-            <div className="absolute inset-0 bg-gradient-to-t from-munchit-yellow via-transparent to-transparent z-10" />
+          {/* ── HERO IMAGE ── */}
+          <div className="flex-1 flex items-end justify-center min-h-[220px] relative mt-2 px-4 z-0">
+            {/* Tall black gradient mask behind the models to blend yellow background into the black bottom actions seamlessly */}
+            <div className="absolute bottom-0 left-0 right-0 h-[280px] bg-gradient-to-t from-black via-black/45 to-transparent z-0 pointer-events-none" />
+            
+            {/* Element 4: Blue Speech Bubble */}
+            <motion.img 
+              src={element4} 
+              alt="I Feel So Attacked Sticker" 
+              className="absolute bottom-[230px] right-[4px] z-20 w-[90px] object-contain drop-shadow-md select-none pointer-events-none"
+              animate={{ rotate: [-4, 2, -4], y: [0, -3, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+            />
+            
             <img 
-              src="/images/personalities/g_d0_img_p7_1.webp" 
-              alt="Munch It Vibe Group" 
-              className="w-[90%] h-full max-h-[300px] object-contain object-center filter drop-shadow-[0_10px_15px_rgba(0,0,0,0.25)] transform scale-105 select-none"
+              src={modeellls} 
+              alt="Munch It Personality Squad" 
+              className="w-full max-h-[350px] object-contain object-bottom filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.25)] transform scale-[1.05] select-none relative z-10"
             />
           </div>
 
-          {/* ── BOTTOM ACTIONS ── */}
-          <div className="relative z-20 mt-auto flex flex-col gap-5 w-full">
+          {/* ── BOTTOM ACTIONS (MERGES SEAMLESSLY INTO GRADIENT) ── */}
+          <div className="relative z-20 px-5 pb-4 pt-3 flex flex-col gap-3 w-full bg-black">
             
             {/* CTA TAKE QUIZ BUTTON */}
-            <div className="relative w-full">
-              {/* Hand-drawn styled arrow pointer */}
-              <div className="absolute -top-12 left-[12%] z-10 pointer-events-none transform -rotate-12 animate-pulse hidden md:block">
-                <svg className="w-10 h-10 text-white fill-none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              </div>
+            <motion.button
+              onClick={handleStartQuiz}
+              whileTap={{ scale: 0.96 }}
+              className="w-full bg-[#0099FF] hover:bg-[#0088EE] text-[#FFF200] rounded-full py-4 px-6 flex items-center justify-center gap-3 border-2 border-white/10 shadow-[0_5px_15px_rgba(0,153,255,0.3)] transition-all select-none cursor-pointer font-display font-black text-xl uppercase tracking-wider relative overflow-hidden"
+            >
+              {/* Shimmer */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none" />
+              
+              <span>TAKE THE QUIZ</span>
+              <span className="text-xl">➔</span>
+            </motion.button>
 
-              <button
-                onClick={() => {
-                  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                  if (isDev) {
-                    sessionStorage.setItem('verified_user', JSON.stringify({
-                      name: 'Developer Mode',
-                      phoneNumber: '08000000000',
-                      verified: true
-                    }));
-                    navigate('/quiz');
-                    return;
-                  }
-                  setError('');
-                  setIsModalOpen(true);
-                }}
-                className="w-full bg-[#00D2D3] hover:bg-[#00B5B5] active:translate-y-1 active:shadow-none text-white rounded-full py-4.5 px-6 flex items-center justify-between shadow-[0_6px_0_0_#00A0A0] transition-all border-2 border-white"
-              >
-                <div className="flex items-center justify-center bg-munchit-red w-10 h-10 rounded-full border border-white">
-                  <ArrowRight size={24} strokeWidth={3} className="text-white" />
-                </div>
-                <span className="font-display font-black text-xl text-center flex-grow uppercase tracking-wider">Take the quiz</span>
-                <div className="w-10" /> {/* Spacer */}
-              </button>
-            </div>
-
-            {/* SOCIAL PROOF PARTICIPANT COUNTER */}
-            <div className="bg-black/5 rounded-2xl py-2 px-3 flex items-center justify-between border border-black/10 gap-3">
+            {/* SOCIAL PROOF */}
+            <div className="mx-auto w-[82%] bg-white/5 rounded-2xl py-2 px-3 flex items-center justify-between border-2 border-[#FFF200] gap-2">
               {/* Overlapping avatar stack */}
-              <div className="flex -space-x-2.5">
-                {['img_p2_2.webp', 'img_p3_2.webp', 'img_p4_2.webp', 'img_p5_2.webp'].map((img, i) => (
+              <div className="flex -space-x-2.5 flex-shrink-0">
+                {[cheesySnack, lovableSnack, sassySnack, smoothSnack, spicySnack].map((snackImg, i) => (
                   <img
                     key={i}
-                    src={`/images/personalities/${img}`}
-                    alt="avatar"
-                    className="w-7 h-7 rounded-full border-2 border-munchit-yellow object-cover object-top"
+                    src={snackImg}
+                    alt="snack avatar"
+                    className="w-7 h-7 rounded-full border border-white/20 object-cover bg-black"
                   />
                 ))}
               </div>
               
-              <div className="text-[10px] md:text-xs font-black text-black/90 uppercase tracking-tight text-right flex-grow leading-tight">
+              <div className="text-[10px] font-black text-[#FFF200] uppercase tracking-tight text-right flex-grow leading-tight">
                 127,432 PEOPLE ALREADY FOUND THEIR FLAVOUR 👀
               </div>
             </div>
@@ -273,231 +313,7 @@ const LandingPage = () => {
 
         </div>
 
-        {/* ── MODAL COMPONENT ── */}
-        <AnimatePresence>
-          {isModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 30, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0.9, y: 30, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 350, damping: 26 }}
-                className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl relative border-4 border-munchit-red flex flex-col my-auto max-h-[90%]"
-              >
-                
-                {/* Top Banner Accent */}
-                <div className="bg-munchit-red text-white py-4 px-6 relative flex justify-between items-center border-b-2 border-white">
-                  <div className="flex items-center gap-2">
-                    <Shield className="text-munchit-yellow w-6 h-6 animate-pulse" />
-                    <span className="font-display font-black text-lg tracking-wide uppercase">PARTICIPANT VALIDATION</span>
-                  </div>
-                  <button 
-                    onClick={() => setIsModalOpen(false)}
-                    className="bg-black/20 hover:bg-black/40 text-white rounded-full p-1.5 transition-colors"
-                  >
-                    <X size={18} strokeWidth={3} />
-                  </button>
-                </div>
 
-                {/* Main Body */}
-                <div className="p-5 md:p-6 overflow-y-auto flex-1 flex flex-col gap-4">
-                  
-                  {/* Error Banner */}
-                  {error && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-red-50 text-red-600 p-3 rounded-2xl flex items-start gap-2 text-xs font-bold border border-red-200"
-                    >
-                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                      <span>{error}</span>
-                    </motion.div>
-                  )}
-
-                  {/* Successful State */}
-                  {success ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center flex-grow">
-                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce border-2 border-green-500">
-                        <Check className="text-green-600 w-10 h-10" strokeWidth={3.5} />
-                      </div>
-                      <h3 className="text-2xl font-display font-black text-gray-800 mb-1">VIBE UNLOCKED!</h3>
-                      <p className="text-gray-500 font-bold text-xs uppercase tracking-wider">Preparing your quiz deck...</p>
-                    </div>
-                  ) : !otpSent ? (
-                    /* Form State: Entering Name & Phone */
-                    <form onSubmit={handleSendOtp} className="space-y-4 flex flex-col flex-1">
-                      <p className="text-gray-700 font-bold text-xs leading-relaxed uppercase">
-                        Enter your details to register and verify your number. You will receive a quick verification code via SMS.
-                      </p>
-
-                      {/* Name input */}
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                          <User size={18} />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="YOUR FULL NAME"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-4 font-bold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-munchit-red focus:bg-white transition-all text-xs"
-                          required
-                          disabled={isLoading}
-                        />
-                      </div>
-
-                      {/* Phone Number Input */}
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                          <Phone size={18} />
-                        </div>
-                        <input
-                          type="tel"
-                          placeholder="PHONE NUMBER (E.G. 08031234567)"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-4 font-bold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-munchit-red focus:bg-white transition-all text-xs"
-                          required
-                          disabled={isLoading}
-                        />
-                      </div>
-
-                      {/* Scrollable Privacy Policy Section */}
-                      <div className="border border-gray-200 rounded-2xl bg-gray-50 p-3 max-h-[100px] overflow-y-auto text-left">
-                        <h4 className="font-black text-[10px] text-gray-800 mb-1 uppercase">MUNCH IT – PRIVACY POLICY & TERMS</h4>
-                        <p className="text-[9px] text-gray-500 font-medium leading-normal space-y-1.5">
-                          <strong>Version 1.0 (May 2026)</strong><br/><br/>
-                          <strong>1. INTRODUCTION</strong><br/>
-                          Kelloggs Tolaram Nigeria Ltd (“KTNL,” we", "us", "our,” “Munch It”) respects your privacy and is committed to protecting your (“you,” “yours,” “participant,” “consumer,” “customer”) personal data. This privacy policy contains information on how we collect your personal data as a part of Which Munch It Flavour Are You website (“Munch It”, “Website”), how we look after your personal data and inform you of your privacy rights and how the law protects you.<br/><br/>
-                          This document outlines the Terms and Conditions of use as well as our Privacy Policy in compliance with the Nigeria Data Protection Act 2023 and other applicable laws. By downloading, accessing, or using this Website, you accept and agree to be bound by these Terms and Conditions and consent to the practices described in our Privacy Policy.<br/><br/>
-                          <strong>2. PURPOSE OF THIS PRIVACY POLICY</strong><br/>
-                          The main purpose of the Website is to help participants to answer a fun filled and entertaining quiz about their personality and they will get to know which Munch It flavour best suits their personality. Participants can share their Munch It personality on social media and share with their family and friends. Our Website is meant for adults above 18 years of age. However, if you want your Child to participate, you must be parent /legal guardian who will accept this policy on behalf of the Child.<br/><br/>
-                          <strong>3. WHAT DATA WE COLLECT FROM YOU</strong><br/>
-                          The data we collect from you is Personal Data: Full Name, Phone Number, Email ID, and Quiz Results. By sharing this information, you provide consent to: (a) collection, use, processing, storage, and retention of your data; (b) receiving future marketing communications; (c) sharing results on social media.<br/><br/>
-                          <strong>4. DATA PROTECTION</strong><br/>
-                          Munch It uses a range of physical, technical, and administrative security measures to safeguard your Personal Data. Dufil’s Customer Support is located at Kellogg Tolaram Nigeria Limited, 3B Eric Moore Road, Surulere, Lagos, Nigeria. Email: contact@kelloggtolaram.com. Phone: +234 907 029 3810.
-                        </p>
-                      </div>
-
-                      {/* Agree Checkbox */}
-                      <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                        <div className="relative flex items-center mt-0.5">
-                          <input
-                            type="checkbox"
-                            checked={agreed}
-                            onChange={(e) => setAgreed(e.target.checked)}
-                            className="sr-only"
-                            disabled={isLoading}
-                          />
-                          <div className={`w-4 h-4 rounded border-2 transition-all flex items-center justify-center ${
-                            agreed 
-                              ? 'bg-munchit-red border-munchit-red text-white' 
-                              : 'border-gray-300 bg-white hover:border-gray-400'
-                          }`}>
-                            {agreed && <Check size={10} strokeWidth={4} />}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-700 leading-tight">
-                          I confirm that I am 18 years of age or older, and agree to the Privacy Policy and Terms and Conditions.
-                        </span>
-                      </label>
-
-                      {/* Submit Button */}
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`w-full font-display font-black text-sm uppercase rounded-full py-3 px-6 transition-all flex items-center justify-center gap-2 ${
-                          isLoading
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
-                            : 'bg-[#00D2D3] hover:bg-[#00B5B5] text-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none border border-white'
-                        }`}
-                      >
-                        {isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
-                            <span>Dispatched SMS...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <span>Send OTP</span>
-                            <ArrowRight size={16} strokeWidth={3.5} />
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  ) : (
-                    /* OTP State: Verifying standard code */
-                    <form onSubmit={handleVerifyOtp} className="space-y-4 text-center">
-                      <p className="text-gray-700 font-bold text-xs uppercase leading-tight">
-                        An SMS OTP verification pin has been sent to <span className="font-black text-gray-800">{phoneNumber}</span>. Please enter the 4-digit PIN below.
-                      </p>
-
-                      {/* OTP Input */}
-                      <div className="max-w-[160px] mx-auto relative">
-                        <input
-                          type="text"
-                          maxLength="4"
-                          placeholder="PIN"
-                          value={otpCode}
-                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                          className="w-full text-center tracking-[0.4em] font-black text-2xl border-2 border-gray-300 rounded-2xl py-3 focus:outline-none focus:border-munchit-red transition-all bg-gray-50 font-display"
-                          disabled={isLoading}
-                          autoFocus
-                          required
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        {/* Submit OTP Button */}
-                        <button
-                          type="submit"
-                          disabled={isLoading}
-                          className={`w-full font-display font-black text-sm uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 ${
-                            isLoading
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
-                              : 'bg-munchit-red hover:bg-red-700 text-white shadow-[0_4px_0_0_#9E040C] active:translate-y-0.5 active:shadow-none border border-white'
-                          }`}
-                        >
-                          {isLoading ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
-                              <span>Verifying...</span>
-                            </div>
-                          ) : (
-                            <>
-                              <span>Verify and Start Quiz</span>
-                              <Check size={16} strokeWidth={3.5} />
-                            </>
-                          )}
-                        </button>
-
-                        {/* Go Back / Reset */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOtpSent(false);
-                            setOtpCode('');
-                            setError('');
-                          }}
-                          disabled={isLoading}
-                          className="text-[10px] font-black text-gray-400 hover:text-gray-600 mt-1 transition-colors disabled:opacity-50 uppercase tracking-wider"
-                        >
-                          Change details
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
       </div>
     </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,13 +9,41 @@
     @apply bg-munchit-yellow text-gray-900 font-sans;
     margin: 0;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
+
+  /* Hide scrollbar for quiz/result views */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
+@layer utilities {
+  /* Shimmer animation for CTA button */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .animate-shimmer {
+    animation: shimmer 2.5s ease-in-out infinite;
+  }
+
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Subtle pattern background */
 .bg-pattern {
   background-color: #FFF200;
   background-image: radial-gradient(circle at 100% 150%, #FFF200 24%, #FFF200 24%, #FFEB3B 25%, #FFEB3B 28%, #FFF200 29%, #FFF200 36%, #FFEB3B 36%, #FFEB3B 40%, #FFF200 40%, #FFF200 50%, #FFEB3B 50%, #FFEB3B 54%, #FFF200 54%, #FFF200 66%, #FFEB3B 66%, #FFEB3B 70%, #FFF200 70%, #FFF200 85%, #FFEB3B 85%, #FFEB3B 90%, #FFF200 90%, #FFF200 100%);
