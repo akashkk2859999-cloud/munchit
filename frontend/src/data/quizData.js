@@ -86,7 +86,14 @@ export const personalities = {
     textColor: "text-munchit-blue",
     archetype: "The Smooth Operator",
     energy: "Charismatic. Playful. Confident.",
-    description: "Sharp. Charming. Effortlessly magnetic. You don't force moments, you own them. You read people, timing, and energy like second nature, and somehow always know exactly what to say. Your confidence doesn't beg for attention. It pulls it. You're calm, clever, and impossible to ignore."
+    description: "Sharp. Charming. Effortlessly magnetic. You don't force moments, you own them. You read people, timing, and energy like second nature, and somehow always know exactly what to say. Your confidence doesn't beg for attention. It pulls it. You're calm, clever, and impossible to ignore.",
+    adjectives: ["SHARP. CHARMING.", "EFFORTLESS."],
+    tagline: "YOU DON'T FORCE MOMENTS - YOU OWN THEM.",
+    stats: { confidence: 88, chaos: 45, patience: 75, romance: 90 },
+    bestMatch: "SASSY SNACK",
+    toxicCombo: "SPICY SNACK",
+    mostUsedPhrase: `"I GOT THIS."`,
+    toxicTrait: "TALKS THEIR WAY OUT OF ANYTHING. 🤫"
   },
   B: {
     id: 'B',
@@ -95,7 +102,14 @@ export const personalities = {
     textColor: "text-munchit-pink",
     archetype: "The Magnetic Charmer",
     energy: "Friendly. Warm. Relatable.",
-    description: "Soft-hearted. Easy to love. Weirdly unforgettable. You don't chase attention people just gravitate toward you. There's something in your energy that feels safe, warm, and instantly familiar. You love deeply, show up fully, and leave an impact people remember long after you've gone."
+    description: "Soft-hearted. Easy to love. Weirdly unforgettable. You don't chase attention people just gravitate toward you. There's something in your energy that feels safe, warm, and instantly familiar. You love deeply, show up fully, and leave an impact people remember long after you've gone.",
+    adjectives: ["SOFT-HEARTED.", "EASY TO LOVE."],
+    tagline: "YOU DON'T CHASE ATTENTION, PEOPLE GRAVITATE TO YOU.",
+    stats: { confidence: 70, chaos: 30, patience: 95, romance: 98 },
+    bestMatch: "SPICY SNACK",
+    toxicCombo: "SASSY SNACK",
+    mostUsedPhrase: `"AWWW, REALLY?!"`,
+    toxicTrait: "FORGIVES TOO EASY, THEN CRIES IN THE SHOWER. 🥺"
   },
   C: {
     id: 'C',
@@ -104,7 +118,14 @@ export const personalities = {
     textColor: "text-munchit-green",
     archetype: "The Sassy Truth Teller",
     energy: "Sharp. Bold. Unfiltered.",
-    description: "Bold. Blunt. Impossible to forget. You say what everyone else is thinking and somehow make honesty feel refreshing. You don't shrink, sugarcoat, or perform. What people see is exactly what they get. Some people get you instantly. Others take time. Either way? You leave a mark."
+    description: "Bold. Blunt. Impossible to forget. You say what everyone else is thinking and somehow make honesty feel refreshing. You don't shrink, sugarcoat, or perform. What people see is exactly what they get. Some people get you instantly. Others take time. Either way? You leave a mark.",
+    adjectives: ["BOLD. BLUNT.", "UNFILTERED."],
+    tagline: "YOU SAY WHAT EVERYONE ELSE IS THINKING.",
+    stats: { confidence: 92, chaos: 85, patience: 20, romance: 55 },
+    bestMatch: "SMOOTH SNACK",
+    toxicCombo: "SWEET SNACK",
+    mostUsedPhrase: `"CAN'T LIE..."`,
+    toxicTrait: "SAYING EXACTLY WHAT'S ON THEIR MIND. 💀"
   },
   D: {
     id: 'D',
@@ -113,7 +134,14 @@ export const personalities = {
     textColor: "text-munchit-purple",
     archetype: "The Luxury Minimalist",
     energy: "Refined. Elevated. Premium.",
-    description: "Calm. Intentional. Quietly powerful. You don't need to be loud to stand out. While everyone else is reacting, you're already thinking three steps ahead. You make composure look effortless even when it isn't. You care deeply, just selectively. Your calm isn't distance, it's depth."
+    description: "Calm. Intentional. Quietly powerful. You don't need to be loud to stand out. While everyone else is reacting, you're already thinking three steps ahead. You make composure look effortless even when it isn't. You care deeply, just selectively. Your calm isn't distance, it's depth.",
+    adjectives: ["CALM. INTENTIONAL.", "POWERFUL."],
+    tagline: "YOU DON'T NEED TO BE LOUD TO STAND OUT.",
+    stats: { confidence: 85, chaos: 40, patience: 90, romance: 75 },
+    bestMatch: "SASSY SNACK",
+    toxicCombo: "SPICY SNACK",
+    mostUsedPhrase: `"DEPENDS."`,
+    toxicTrait: "GHOSTS FOR 3 DAYS TO 'RECHARGE'. 🔋"
   },
   E: {
     id: 'E',
@@ -122,6 +150,13 @@ export const personalities = {
     textColor: "text-munchit-spicy",
     archetype: "The Bold Instigator",
     energy: "Daring. Provocative. Fearless.",
-    description: "Bold. Fearless. Fully alive. You don't wait for moments, you make them. Your energy shifts every room you enter, and people feel it before you even speak. You move fast, trust your gut, and dive in while everyone else is still hesitating. It's not recklessness, it's confidence."
+    description: "Bold. Fearless. Fully alive. You don't wait for moments, you make them. Your energy shifts every room you enter, and people feel it before you even speak. You move fast, trust your gut, and dive in while everyone else is still hesitating. It's not recklessness, it's confidence.",
+    adjectives: ["BOLD. FEARLESS.", "FULLY LIVE."],
+    tagline: "YOU CREATE MOMENTS - YOU DON'T WAIT FOR THEM.",
+    stats: { confidence: 95, chaos: 92, patience: 10, romance: 70 },
+    bestMatch: "SWEET SURPRISE",
+    toxicCombo: "SMOOTH SNACK",
+    mostUsedPhrase: `"SAY LESS."`,
+    toxicTrait: "REPLIES FAST, THEN PRETENDS NOT TO CARE. 😈"
   }
 };
