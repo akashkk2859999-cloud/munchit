@@ -142,7 +142,7 @@ const LandingPage = () => {
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── PHONE CONTAINER SIMULATOR ── */}
-      <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300 relative">
+      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 relative overflow-hidden flex flex-col z-10 transition-all duration-300">
         
         {/* Phone Notch/Dynamic Island (Desktop simulator only) */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
@@ -248,7 +248,7 @@ const LandingPage = () => {
             >
               WHAT'S YOUR
               <span className="block text-[3.8rem] short:text-[3.2rem] my-0.5 font-black leading-[0.9]">SNACK</span>
-              <span className="block text-[2.8rem] short:text-[2.3rem] leading-[0.9]">PERSONALITY?</span>
+              <span className="block text-[2.35rem] short:text-[1.95rem] leading-[0.9]">PERSONALITY?</span>
             </h1>
             <p className="mt-3 text-[13px] short:text-[11px] font-black text-[#0099FF] max-w-[280px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
               7 QUICK QUESTIONS<br/>ONE DANGEROUSLY ACCURATE RESULT

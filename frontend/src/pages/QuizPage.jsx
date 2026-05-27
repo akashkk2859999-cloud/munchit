@@ -331,8 +331,8 @@ const QuizPage = () => {
         {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
-        {/* ── APP CANVAS — locked vertical scroll to ensure absolute single-viewport fit ── */}
-        <div className="flex-1 flex flex-col h-full relative overflow-hidden px-4 pt-6 short:pt-2 md:pt-10 pb-4 short:pb-1 select-none scrollbar-none">
+        {/* ── APP CANVAS — allows vertical scrolling on extremely small viewports to ensure backup navigation access ── */}
+        <div className="flex-1 flex flex-col h-full relative overflow-y-auto px-4 pt-6 short:pt-2 md:pt-10 pb-4 short:pb-1 select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
           <div className="flex justify-between items-center w-full mb-2 relative z-10">
