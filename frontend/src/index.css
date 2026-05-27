@@ -1,4 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap');
+@font-face {
+  font-family: 'Spicy Tuna';
+  src: url('./Spicy Tuna (1).otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'StompBrook';
+  src: url('./StompBrook-Regular (1).ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;

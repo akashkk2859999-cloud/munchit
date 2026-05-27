@@ -18,6 +18,9 @@ import spicySnack from '../assets/spicy_snack.png';
 const LandingPage = () => {
   const navigate = useNavigate();
 
+  // Navigation Drawer State
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -182,8 +185,8 @@ const LandingPage = () => {
             
             {/* Hamburger Button */}
             <button 
-              onClick={() => alert("Munch It Personality Quiz — V2.0") }
-              className="bg-[#0099FF] text-[#FFF200] rounded-full w-10 h-10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              onClick={() => setIsMenuOpen(true)}
+              className="bg-[#0099FF] text-[#FFF200] rounded-full w-10 h-10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer z-30"
               aria-label="Menu"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
@@ -196,11 +199,11 @@ const LandingPage = () => {
           <div className="px-5 mt-3 short:mt-1 mb-1 relative z-10 text-center flex flex-col items-center flex-grow short:flex-grow-0 justify-center min-h-[150px] short:min-h-0 short:py-0">
             
             {/* Styled outline drawings & stickers */}
-            {/* Element 3: Fire Sticker (Top-Left) */}
+            {/* Element 3: Fire Sticker (Top-Left) — pushed up and scaled down */}
             <motion.img 
               src={element3} 
               alt="Fire Sticker" 
-              className="absolute top-6 left-2 z-20 w-[95px] short:w-[70px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-2 left-0.5 z-20 w-[78px] short:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ y: [0, -3, 0], scale: [1, 1.05, 1] }}
               transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -218,44 +221,43 @@ const LandingPage = () => {
             </motion.div>
 
             {/* Float-animated speech bubble stickers — adjusted to prevent text overlapping */}
-            {/* Element 1: Black Speech Bubble (Moved down left side) */}
+            {/* Element 1: Black Speech Bubble (Moved higher and further left to prevent covering text) */}
             <motion.img 
               src={element1} 
               alt="No Lie Sticker" 
-              className="absolute top-[58%] left-[2px] z-20 w-[80px] short:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-[65%] left-[-8px] z-20 w-[68px] short:w-[50px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-6, -2, -6], y: [0, -3, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
 
-            {/* Element 2: Pink Speech Bubble */}
+            {/* Element 2: Pink Speech Bubble (Pushed higher, to the right, and slightly smaller) */}
             <motion.img 
               src={element2} 
               alt="My Result Sticker" 
-              className="absolute top-[12%] right-[2px] z-20 w-[78px] short:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-[2%] right-[6px] z-20 w-[64px] short:w-[50px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [4, 8, 4], y: [0, 3, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
             />
 
-            {/* Headline Title */}
+            {/* Headline Title — Optimized size and rotation to prevent edge clipping */}
             <h1 
-              className="text-[2.6rem] short:text-[2.2rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-4 short:mt-2"
+              className="text-[2.1rem] short:text-[1.7rem] px-4 leading-[0.9] font-black text-[#E30613] font-sans uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-4 short:mt-2 w-full"
               style={{ 
-                textShadow: '-3.2px -3.2px 0 #fff, 3.2px -3.2px 0 #fff, -3.2px 3.2px 0 #fff, 3.2px 3.2px 0 #fff, 5px 5px 0px rgba(0,0,0,0.15)' 
+                textShadow: '-3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff, 3px 3px 0 #fff, 5px 5px 0px rgba(0,0,0,0.15)' 
               }}
             >
-              WHICH
-              <span className="block text-[3.4rem] short:text-[2.8rem] my-1 short:my-0.5 font-black leading-[0.9]">MUNCH IT</span>
-              <span className="block text-[3rem] short:text-[2.5rem] my-1 short:my-0.5 leading-[0.9]">SNACK</span>
-              <span className="block text-[2.8rem] short:text-[2.3rem] leading-[0.9]">ARE YOU?</span>
+              WHAT'S YOUR
+              <span className="block text-[3.8rem] short:text-[3.2rem] my-0.5 font-black leading-[0.9]">SNACK</span>
+              <span className="block text-[2.8rem] short:text-[2.3rem] leading-[0.9]">PERSONALITY?</span>
             </h1>
-            <p className="mt-2 text-[10px] font-black text-[#0099FF] max-w-[245px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
+            <p className="mt-3 text-[13px] short:text-[11px] font-black text-[#0099FF] max-w-[280px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
               7 QUICK QUESTIONS<br/>ONE DANGEROUSLY ACCURATE RESULT
             </p>
           </div>
           {/* ── HERO IMAGE ── */}
           <div className="flex-1 flex items-end justify-center min-h-[220px] short:min-h-[180px] relative mt-2 short:mt-0 px-4 z-0">
-            {/* Tall black gradient mask behind the models to blend yellow background into the black bottom actions seamlessly */}
-            <div className="absolute bottom-0 left-0 right-0 h-[280px] bg-gradient-to-t from-black via-black/45 to-transparent z-0 pointer-events-none" />
+            {/* Very subtle low-opacity black gradient overlay to blend the cut-off feet seamlessly */}
+            <div className="absolute bottom-0 left-0 right-0 h-[100px] short:h-[70px] bg-gradient-to-t from-black/5 via-black/2 to-transparent z-15 pointer-events-none" />
             
             {/* Element 4: Blue Speech Bubble */}
             <motion.img 
@@ -269,7 +271,7 @@ const LandingPage = () => {
             <img 
               src={modeellls} 
               alt="Munch It Personality Squad" 
-              className="w-full max-h-[350px] short:max-h-[280px] object-contain object-bottom filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.25)] transform scale-[1.05] select-none relative z-10"
+              className="w-full max-h-[350px] short:max-h-[280px] object-contain object-bottom filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.15)] transform scale-[1.08] select-none relative z-10"
             />
           </div>
 
@@ -280,7 +282,7 @@ const LandingPage = () => {
             <motion.button
               onClick={handleStartQuiz}
               whileTap={{ scale: 0.96 }}
-              className="w-full bg-[#0099FF] hover:bg-[#0088EE] text-[#FFF200] rounded-full py-4 px-6 flex items-center justify-center gap-3 border-2 border-white/10 shadow-[0_5px_15px_rgba(0,153,255,0.3)] transition-all select-none cursor-pointer font-display font-black text-xl uppercase tracking-wider relative overflow-hidden"
+              className="w-full bg-[#0099FF] hover:bg-[#0088EE] text-[#FFF200] rounded-full py-4 px-6 flex items-center justify-center gap-3 border-2 border-white/10 shadow-[0_5px_15px_rgba(0,153,255,0.3)] transition-all select-none cursor-pointer font-sans font-black text-xl uppercase tracking-wider relative overflow-hidden"
             >
               {/* Shimmer */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none" />
@@ -312,7 +314,75 @@ const LandingPage = () => {
 
         </div>
 
+        {/* ── PREMIUM NAVIGATION DRAWER ── */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 text-white text-left font-sans select-none"
+            >
+              <div>
+                {/* Header */}
+                <div className="flex justify-between items-center w-full mb-8 pt-4">
+                  <div className="h-9 flex items-center">
+                    <img 
+                      src={munchItLogo} 
+                      alt="MUNCH IT Logo" 
+                      className="h-full w-auto object-contain filter drop-shadow-sm" 
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="bg-[#FFF200] hover:bg-[#FFE100] text-black rounded-full p-2 border-2 border-black shadow-[2px_2px_0_0_#000] transition-colors cursor-pointer"
+                    aria-label="Close Menu"
+                  >
+                    <X size={18} strokeWidth={4} />
+                  </button>
+                </div>
 
+                {/* Brand slogan */}
+                <div className="mb-8 px-2">
+                  <h3 className="text-[#FFF200] font-display font-black text-2xl uppercase tracking-tight -rotate-2" style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.5)' }}>
+                    CRUNCH OUT LOUD! 🔥
+                  </h3>
+                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-wider mt-1.5">
+                    Find your unique snack personality
+                  </p>
+                </div>
+
+                {/* Navigation Links */}
+                <div className="space-y-4">
+                  {[
+                    { label: '🏠 HOME', action: () => { setIsMenuOpen(false); navigate('/'); } },
+                    { label: '🔥 TAKE THE QUIZ', action: () => { setIsMenuOpen(false); navigate('/quiz'); } },
+                    { label: '🔒 PRIVACY POLICY', action: () => { setIsMenuOpen(false); window.open('https://munchit-ue.tolaram.com/privacy', '_blank'); } },
+                    { label: '📜 TERMS & CONDITIONS', action: () => { setIsMenuOpen(false); window.open('https://munchit-ue.tolaram.com/terms', '_blank'); } },
+                  ].map((link, idx) => (
+                    <motion.button
+                      key={idx}
+                      onClick={link.action}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full text-left px-5 py-4 bg-gray-900 hover:bg-gray-800 border-2 border-black rounded-2xl font-sans font-black text-sm uppercase tracking-wider text-white shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-between group cursor-pointer"
+                    >
+                      <span className="group-hover:text-[#FFF200] transition-colors">{link.label}</span>
+                      <span className="text-[#FFF200] text-xs transition-transform group-hover:translate-x-1">➔</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Credits */}
+              <div className="text-center pt-6 border-t border-white/10">
+                <span className="block font-sans font-black text-[11px] text-gray-500 tracking-[0.2em] uppercase">
+                  Munch It Personality Quiz
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

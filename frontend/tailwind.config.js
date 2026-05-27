@@ -21,8 +21,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
+        sans: ['Spicy Tuna', 'Inter', 'sans-serif'],
+        display: ['StompBrook', 'Outfit', 'sans-serif'],
       }
     },
   },

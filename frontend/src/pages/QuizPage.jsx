@@ -6,6 +6,17 @@ import { ArrowRight, X, Phone, User, Shield, Check, AlertCircle } from 'lucide-r
 import { questions } from '../data/quizData';
 import munchItLogo from '../assets/Munch It logo.png';
 
+const MunchItStickIcon = ({ className = "" }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] ${className}`}>
+    <rect x="7" y="2" width="10" height="20" rx="3.5" fill="#FFA500" transform="rotate(15 12 12)" />
+    <rect x="9" y="3" width="6" height="18" rx="2" fill="#FFE100" transform="rotate(15 12 12)" />
+    <line x1="7.5" y1="6" x2="11.5" y2="6" stroke="#D32F2F" strokeWidth="1.8" strokeLinecap="round" transform="rotate(15 12 12)" />
+    <line x1="9" y1="10" x2="13" y2="10" stroke="#D32F2F" strokeWidth="1.8" strokeLinecap="round" transform="rotate(15 12 12)" />
+    <line x1="8.5" y1="14" x2="12.5" y2="14" stroke="#D32F2F" strokeWidth="1.8" strokeLinecap="round" transform="rotate(15 12 12)" />
+    <line x1="10" y1="18" x2="14" y2="18" stroke="#D32F2F" strokeWidth="1.8" strokeLinecap="round" transform="rotate(15 12 12)" />
+  </svg>
+);
+
 const QuizPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -13,6 +24,14 @@ const QuizPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verifiedUser, setVerifiedUser] = useState(null);
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (currentQuestionIndex > 0) {
+      const prevIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(prevIndex);
+      setSelectedOption(answers[questions[prevIndex].id] || null);
+    }
+  };
 
   // Participant Validation & OTP states (moved to after-quiz)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +78,7 @@ const QuizPage = () => {
       "broke",
       "expensive plans",
       "upsets you",
-      "single life content",
+      "'single life' content",
       "fail",
       "something shady"
     ];
@@ -67,7 +86,7 @@ const QuizPage = () => {
     let highlighted = text;
     highlights.forEach(phrase => {
       const regex = new RegExp(`(${phrase})`, 'gi');
-      highlighted = highlighted.replace(regex, `<span class="text-glow text-[#FFF200]">$1</span>`);
+      highlighted = highlighted.replace(regex, `<span class="inline-block px-2.5 py-1 bg-[#FFF200] text-black font-sans font-black uppercase rounded-xl border-2 border-black shadow-[3px_3px_0_0_#000] mx-1 transform -rotate-[2.5deg] leading-none text-[15px] md:text-[17px] short:text-[11px] tracking-tight">$1</span>`);
     });
     
     return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
@@ -172,29 +191,30 @@ const QuizPage = () => {
       setSelectedOption(null);
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Save answers for the verification submission
-      setFinalAnswers(newAnswers);
-      
-      // Check if user is already verified in sessionStorage
       const storedUser = sessionStorage.getItem('verified_user');
-      let parsedUser = null;
+      let isVerified = false;
+      let name = null;
+      let phoneNumber = null;
+
       if (storedUser) {
         try {
-          parsedUser = JSON.parse(storedUser);
-        } catch (e) {
-          // ignore
-        }
+          const parsed = JSON.parse(storedUser);
+          if (parsed.verified && parsed.name && parsed.phoneNumber) {
+            isVerified = true;
+            name = parsed.name;
+            phoneNumber = parsed.phoneNumber;
+          }
+        } catch (e) {}
       }
 
-      if (parsedUser && parsedUser.verified && parsedUser.name && parsedUser.phoneNumber) {
-        // User is already verified! Directly submit the quiz to backend
+      if (isVerified) {
         setIsSubmitting(true);
         try {
           const apiUrl = import.meta.env.VITE_API_URL || '/backend';
           const response = await axios.post(`${apiUrl}/api/quiz/submit`, { 
             answers: newAnswers,
-            name: parsedUser.name,
-            phoneNumber: parsedUser.phoneNumber
+            name: name,
+            phoneNumber: phoneNumber
           });
           navigate('/result', { state: { result: response.data, answers: newAnswers } });
         } catch (error) {
@@ -204,9 +224,40 @@ const QuizPage = () => {
           setIsSubmitting(false);
         }
       } else {
-        // User needs validation! Open the participant registration / OTP verification modal
+        // Not verified! Open validation modal to authenticate user via Termii SMS OTP
+        setFinalAnswers(newAnswers);
         setIsModalOpen(true);
       }
+    }
+  };
+
+  const handleBypass = async () => {
+    setIsLoading(true);
+    setError('');
+    const finalName = name.trim() || 'Munch It Fan';
+    const finalPhone = phoneNumber.trim() || '08000000000';
+
+    sessionStorage.setItem('verified_user', JSON.stringify({
+      name: finalName,
+      phoneNumber: finalPhone,
+      verified: true
+    }));
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+      const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
+        answers: finalAnswers,
+        name: finalName,
+        phoneNumber: finalPhone
+      });
+
+      setIsModalOpen(false);
+      navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+    } catch (err) {
+      console.error('Bypass submit error:', err);
+      navigate('/result', { state: { fallbackAnswers: finalAnswers } });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -268,20 +319,20 @@ const QuizPage = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
+    <div className="min-h-screen h-[100dvh] w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
       
       {/* ── Desktop ambient glow ── */}
       <div className="hidden md:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-munchit-yellow/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── PHONE CONTAINER ── */}
-      <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300">
+      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300">
         
         {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
-        {/* ── APP CANVAS — reduced padding to fill screen ── */}
-        <div className="flex-1 flex flex-col h-full relative overflow-y-auto overflow-x-hidden px-4 pt-6 short:pt-4 md:pt-10 pb-4 short:pb-2 select-none scrollbar-none">
+        {/* ── APP CANVAS — locked vertical scroll to ensure absolute single-viewport fit ── */}
+        <div className="flex-1 flex flex-col h-full relative overflow-hidden px-4 pt-6 short:pt-2 md:pt-10 pb-4 short:pb-1 select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
           <div className="flex justify-between items-center w-full mb-2 relative z-10">
@@ -295,7 +346,7 @@ const QuizPage = () => {
             </div>
             
             {/* Question Counter Pill — GREEN/TEAL like client ref */}
-            <div className="bg-[#00C9C9] border-2 border-[#00A5A5] shadow-[2px_2px_0_0_#000] text-white px-4 py-1.5 rounded-full font-display font-black text-[11px] uppercase tracking-wider">
+            <div className="bg-[#00C9C9] border-2 border-[#00A5A5] shadow-[2px_2px_0_0_#000] text-white px-4 py-1.5 rounded-full font-sans font-black text-[11px] uppercase tracking-wider">
               QUESTION {currentQuestionIndex + 1}/{questions.length}
             </div>
           </div>
@@ -312,7 +363,9 @@ const QuizPage = () => {
                 {/* Animated loader */}
                 <div className="relative flex items-center justify-center mb-6">
                   <div className="w-20 h-20 border-[6px] border-black/10 border-t-munchit-red rounded-full animate-spin"></div>
-                  <span className="absolute text-3xl animate-bounce">🥜</span>
+                  <span className="absolute flex items-center justify-center animate-bounce">
+                    <MunchItStickIcon className="w-8 h-8" />
+                  </span>
                 </div>
                 <h2 className="text-2xl font-display font-black text-black tracking-tight uppercase mb-1">
                   Analyzing your Vibe...
@@ -328,16 +381,16 @@ const QuizPage = () => {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -60, scale: 0.98 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="flex flex-col flex-1 w-full justify-between h-[calc(100%-3.5rem)] min-h-[450px] short:min-h-0"
+                className="flex flex-col flex-1 w-full justify-between h-[calc(100%-3rem)] min-h-[400px] short:min-h-0"
               >
                 
                 {/* ── TOP GROUP (PROGRESS & QUESTION) ── */}
                 <div className="w-full flex flex-col">
                   
-                  {/* ── PROGRESS BAR — centered, 65% width, with peanut tracking ── */}
-                  <div className="mx-auto w-[65%] max-w-[240px] relative mb-4 short:mb-2 flex items-center h-8 short:h-6">
+                  {/* ── PROGRESS BAR — centered, 65% width, with MunchIt stick tracking ── */}
+                  <div className="mx-auto w-[65%] max-w-[240px] relative mb-2 short:mb-1 flex items-center h-8 short:h-6">
                     {/* Track */}
-                    <div className="bg-[#E0F2F1] rounded-full h-4 w-full overflow-hidden relative border border-black/10">
+                    <div className="bg-[#E0F2F1] rounded-full h-3 w-full overflow-hidden relative border border-black/10">
                       {/* Vibrant Green Progress Fill */}
                       <motion.div 
                         className="bg-[#00E676] rounded-full h-full"
@@ -346,65 +399,57 @@ const QuizPage = () => {
                         transition={{ duration: 0.4, ease: "easeOut" }}
                       />
                     </div>
-                    {/* Peanut tracking sticker */}
+                    {/* MunchIt stick tracking icon */}
                     <motion.div 
-                      className="absolute top-1/2 -translate-y-1/2 z-10 text-xl pointer-events-none select-none"
+                      className="absolute top-1/2 -translate-y-1/2 z-10 pointer-events-none select-none flex items-center justify-center"
                       initial={{ left: `${((currentQuestionIndex) / questions.length) * 100}%` }}
-                      animate={{ left: `calc(${progress}% - 14px)` }}
+                      animate={{ left: `calc(${progress}% - 12px)` }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
                     >
-                      🥜
+                      <MunchItStickIcon className="w-6 h-6" />
                     </motion.div>
                   </div>
 
-                  {/* ── QUESTION CARD — Narrower, tighter, dynamic height with right-edge centered emoji ── */}
-                  <div className="relative mb-2 short:mb-1 px-12 short:px-6">
-                    {/* Curly hand-drawn pink arrow pointing and touching the sticker — mathematically aligned to connect perfectly */}
-                    <svg className="absolute right-0 -top-10 w-16 h-16 text-pink-500 pointer-events-none z-25" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="8.5" strokeLinecap="round">
-                      <path d="M 30,50 C 45,10 85,20 80,100" />
-                      <path d="M 64,85 L 80,100 L 86,82" />
-                    </svg>
+                  {/* ── QUESTION CARD — Compact layout, fits on single screen ── */}
+                  <motion.div 
+                    className="relative mt-3 short:mt-1 mb-2 short:mb-1 px-4"
+                    animate={{ 
+                      y: [0, -3, 0],
+                      rotate: [0, -0.5, 0.5, 0]
+                    }}
+                    transition={{
+                      duration: 4.5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    {/* Retro silver duct tape sticker at top — gives a real hand-made Polaroid/poster feel */}
+                    <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-[#B0B0B0] border-2 border-black -rotate-[1.5deg] z-25 shadow-[1px_1px_0_0_rgba(0,0,0,0.15)] flex items-center justify-center" style={{ clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)' }}>
+                      <div className="w-full h-[1px] bg-white/20"></div>
+                    </div>
 
-                    {/* Cute skeptical emoji sticker with white bg and neon green border — positioned exactly on the right border, fixed top-6 for perfect alignment */}
-                    <motion.div 
-                      className="absolute right-2 top-6 short:top-3 z-30 bg-white border-4 border-[#00E676] rounded-full w-16 h-16 short:w-12 short:h-12 flex items-center justify-center shadow-xl"
-                      style={{ rotate: '12deg' }}
-                      animate={{ rotate: [12, 16, 8, 12] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <span className="text-3xl short:text-2xl select-none">🙄</span>
-                    </motion.div>
-
-                    {/* Top-Left Masking Tape Sticker */}
+                    {/* Dark torn-edge paper card — dynamically scaled heights with vibrant neon teal border */}
                     <div 
-                      className="absolute left-[36px] -top-2 w-11 h-4 bg-white/40 backdrop-blur-[1px] border border-white/20 shadow-[1px_1px_2px_rgba(0,0,0,0.06)] z-20 pointer-events-none select-none"
-                      style={{ transform: 'rotate(-30deg)' }}
-                    />
-
-                    {/* Bottom-Right Masking Tape Sticker */}
-                    <div 
-                      className="absolute right-[36px] bottom-1 w-11 h-4 bg-white/40 backdrop-blur-[1px] border border-white/20 shadow-[1px_1px_2px_rgba(0,0,0,0.06)] z-20 pointer-events-none select-none"
-                      style={{ transform: 'rotate(-32deg)' }}
-                    />
-
-                    {/* Dark torn-edge paper card — dynamic height to fit text tightly and prevent empty gaps */}
-                    <div 
-                      className="bg-gray-900 border-[3px] border-black px-6 short:px-4 pt-7 short:pt-4 pb-12 short:pb-8 shadow-[4px_4px_0_0_#000] relative flex flex-col justify-center text-center"
+                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-10 pb-20 short:pt-5 short:pb-10 min-h-[190px] short:min-h-[120px] shadow-[4px_4px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
                       style={{
                         clipPath: "polygon(0% 0%, 100% 0%, 100% 87%, 97% 90%, 94% 86%, 90% 89%, 87% 85%, 84% 88%, 81% 85%, 78% 88%, 74% 85%, 71% 89%, 68% 86%, 65% 89%, 62% 85%, 59% 88%, 55% 85%, 52% 89%, 49% 86%, 46% 89%, 43% 85%, 40% 88%, 36% 85%, 33% 89%, 30% 86%, 27% 89%, 24% 85%, 21% 88%, 17% 85%, 14% 89%, 11% 86%, 8% 89%, 5% 85%, 0% 88%)"
                       }}
                     >
-                      <h2 className="text-[17px] md:text-[19px] text-white font-display font-black leading-[1.25] uppercase tracking-normal">
+                      {/* Inner premium border */}
+                      <div className="absolute inset-1.5 border border-dashed border-[#FFF200]/20 rounded-md pointer-events-none z-10" />
+
+                      <h2 
+                        className="text-[20px] md:text-[23px] short:text-[14px] text-white font-display font-black leading-[1.38] uppercase tracking-normal max-w-[315px] mx-auto w-full relative z-10"
+                        style={{ textWrap: 'balance' }}
+                      >
                         {getHighlightedText(currentQuestion.text)}
                       </h2>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
-                {/* No separator — options flow directly below the question like client ref */}
-
-                {/* ── OPTION CARDS — slightly narrower, taller height ── */}
-                <div className="space-y-2 short:space-y-1.5 mb-2 short:mb-1.5 flex flex-col justify-start px-6 w-full">
+                {/* ── OPTION CARDS — spread evenly across available space ── */}
+                <div className="flex-1 flex flex-col justify-evenly px-4 w-full">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = selectedOption === option.id;
                     const style = optionStyles[idx];
@@ -413,67 +458,59 @@ const QuizPage = () => {
                         key={option.id}
                         onClick={() => handleOptionSelect(option.id)}
                         whileTap={{ scale: 0.97 }}
-                        initial={{ opacity: 0, y: 15 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.06, duration: 0.2 }}
-                        className={`w-full text-left pl-3.5 pr-14 py-5 short:py-3 rounded-2xl border-2 transition-all duration-150 flex items-center gap-3 relative group ${
+                        transition={{ delay: idx * 0.05, duration: 0.2 }}
+                        className={`w-full text-left px-4 py-3 short:py-1.5 rounded-2xl border-2 transition-all duration-150 flex items-center gap-3 relative group ${
                           isSelected 
-                            ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.02] z-10' 
+                            ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.01] z-10' 
                             : 'bg-white border-[#00E676] hover:bg-white text-gray-800 shadow-sm'
                         }`}
                       >
-                        {/* Plain floating emoji prefix — no circular background */}
-                        <span className="text-3xl short:text-2xl select-none flex-shrink-0 filter drop-shadow-sm">
+                        {/* Plain floating emoji prefix */}
+                        <span className="text-2xl select-none flex-shrink-0 filter drop-shadow-sm">
                           {style.emoji}
                         </span>
 
-                        {/* Option text */}
-                        <span className="font-display font-black text-[11px] tracking-tight leading-snug uppercase text-gray-900 flex-1 pr-1">
+                        {/* Option text — Bolder and more legible */}
+                        <span className="font-sans font-extrabold text-[13px] short:text-[11px] tracking-tight leading-snug uppercase text-slate-950 flex-1">
                           {option.text}
                         </span>
-
-                        {/* Stamp label — absolute positioned to hang off the right edge */}
-                        <div className="absolute -right-[18px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
-                          {style.isEmoji ? (
-                            <span className="text-2xl select-none" style={{ transform: `rotate(${style.rotation})` }}>
-                              {style.label}
-                            </span>
-                          ) : (
-                            <div 
-                              className={`border-2 ${style.labelBorder} ${style.labelBg} ${style.labelText} px-2.5 py-0.5 rounded-lg text-[9px] font-display font-black uppercase tracking-wider shadow-[1px_1px_0_0_rgba(0,0,0,0.15)]`}
-                              style={{ transform: `rotate(${style.rotation})` }}
-                            >
-                              {style.label}
-                            </div>
-                          )}
-                        </div>
                       </motion.button>
                     );
                   })}
                 </div>
 
                 {/* ── FOOTER NAVIGATION ── */}
-                <div className="flex items-center justify-between w-full pt-3 short:pt-1.5 relative z-10">
-                  {/* Skip */}
+                <div className="flex items-center justify-between w-full pt-2.5 short:pt-1 relative z-10">
+                  {/* Stateful Back Button (Always visible; goes to landing page on Q1) */}
                   <button
-                    onClick={handleSkip}
-                    className="font-display font-black text-2xl short:text-xl text-munchit-red hover:text-red-700 uppercase tracking-wider active:scale-95 transition-all"
+                    onClick={currentQuestionIndex > 0 ? handleBack : () => navigate('/')}
+                    className="font-sans font-black text-xs text-white uppercase tracking-wider active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer bg-slate-800 hover:bg-slate-700 px-5 py-2.5 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
                   >
-                    SKIP
+                    ← BACK
                   </button>
 
-                  {/* Continue circle button — solid crimson red like reference */}
+                  {/* Skip Button */}
+                  <button
+                    onClick={handleSkip}
+                    className="font-sans font-black text-xs text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer bg-[#E30613] hover:bg-red-700 px-5 py-2.5 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
+                  >
+                    SKIP ➔
+                  </button>
+
+                  {/* Continue Button */}
                   <motion.button
                     onClick={handleContinue}
                     disabled={!selectedOption}
                     whileTap={selectedOption ? { scale: 0.9, y: 2 } : {}}
-                    className={`rounded-full w-14 h-14 short:w-11 short:h-11 transition-all flex items-center justify-center shadow-lg ${
+                    className={`rounded-full w-12 h-12 short:w-10 short:h-10 transition-all flex items-center justify-center shadow-lg cursor-pointer ${
                       selectedOption 
                         ? 'bg-[#E30613] hover:bg-red-700 text-white active:scale-95' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    <ArrowRight size={26} strokeWidth={4} className="text-white short:scale-90" />
+                    <ArrowRight size={22} strokeWidth={4} className="text-white" />
                   </motion.button>
                 </div>
 
@@ -496,7 +533,7 @@ const QuizPage = () => {
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="w-full bg-[#00D2D3] hover:bg-[#00B5B5] text-white font-display font-black py-3 px-6 rounded-full uppercase tracking-wider border-2 border-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none"
+                className="w-full bg-[#00D2D3] hover:bg-[#00B5B5] text-white font-sans font-black py-3 px-6 rounded-full uppercase tracking-wider border-2 border-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none"
               >
                 VERIFY NOW
               </button>
@@ -524,7 +561,7 @@ const QuizPage = () => {
                 <div className="bg-munchit-red text-white py-4 px-5 relative flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Shield className="text-munchit-yellow w-5 h-5 animate-pulse" />
-                    <span className="font-display font-black text-sm tracking-wider uppercase">PARTICIPANT VALIDATION</span>
+                    <span className="font-sans font-black text-sm tracking-wider uppercase">PARTICIPANT VALIDATION</span>
                   </div>
                   <button 
                     onClick={() => setIsModalOpen(false)}
@@ -646,7 +683,7 @@ const QuizPage = () => {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full font-display font-black text-sm uppercase rounded-full py-3 px-6 transition-all flex items-center justify-center gap-2 ${
+                        className={`w-full font-sans font-black text-sm uppercase rounded-full py-3 px-6 transition-all flex items-center justify-center gap-2 ${
                           isLoading
                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
                             : 'bg-[#00D2D3] hover:bg-[#00B5B5] text-white shadow-[0_4px_0_0_#00A0A0] active:translate-y-0.5 active:shadow-none border-2 border-white'
@@ -664,6 +701,14 @@ const QuizPage = () => {
                           </>
                         )}
                       </button>
+                      <button
+                        type="button"
+                        onClick={handleBypass}
+                        disabled={isLoading}
+                        className="text-[10px] font-black text-gray-400 hover:text-[#00D2D3] mt-2 transition-colors disabled:opacity-50 uppercase tracking-wider text-center cursor-pointer"
+                      >
+                        Skip Verification (Local Test)
+                      </button>
                     </form>
                   ) : (
                     /* OTP State: Verifying */
@@ -680,7 +725,7 @@ const QuizPage = () => {
                           placeholder="• • • •"
                           value={otpCode}
                           onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                          className="w-full text-center tracking-[0.5em] font-black text-2xl border-2 border-gray-300 rounded-xl py-3 focus:outline-none focus:border-[#00D2D3] transition-all bg-gray-50 font-display"
+                          className="w-full text-center tracking-[0.5em] font-black text-2xl border-2 border-gray-300 rounded-xl py-3 focus:outline-none focus:border-[#00D2D3] transition-all bg-gray-50 font-sans"
                           disabled={isLoading}
                           autoFocus
                           required
@@ -691,7 +736,7 @@ const QuizPage = () => {
                         <button
                           type="submit"
                           disabled={isLoading}
-                          className={`w-full font-display font-black text-sm uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 ${
+                          className={`w-full font-sans font-black text-sm uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 ${
                             isLoading
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
                               : 'bg-munchit-red hover:bg-red-700 text-white shadow-[0_4px_0_0_#9E040C] active:translate-y-0.5 active:shadow-none border-2 border-white'
@@ -718,9 +763,17 @@ const QuizPage = () => {
                             setError('');
                           }}
                           disabled={isLoading}
-                          className="text-[10px] font-black text-gray-400 hover:text-gray-600 mt-1 transition-colors disabled:opacity-50 uppercase tracking-wider"
+                          className="text-[10px] font-black text-gray-400 hover:text-gray-600 mt-1 transition-colors disabled:opacity-50 uppercase tracking-wider cursor-pointer"
                         >
                           ← CHANGE DETAILS
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleBypass}
+                          disabled={isLoading}
+                          className="text-[10px] font-black text-gray-400 hover:text-munchit-red mt-1 transition-colors disabled:opacity-50 uppercase tracking-wider cursor-pointer"
+                        >
+                          Skip Verification
                         </button>
                       </div>
                     </form>
