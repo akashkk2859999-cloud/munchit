@@ -193,14 +193,14 @@ const LandingPage = () => {
           </div>
 
           {/* ── HEADLINE SECTION ── */}
-          <div className="px-5 mt-2 mb-1 relative z-10 text-center flex flex-col items-center">
+          <div className="px-5 mt-3 short:mt-1 mb-1 relative z-10 text-center flex flex-col items-center flex-grow short:flex-grow-0 justify-center min-h-[150px] short:min-h-0 short:py-0">
             
             {/* Styled outline drawings & stickers */}
             {/* Element 3: Fire Sticker (Top-Left) */}
             <motion.img 
               src={element3} 
               alt="Fire Sticker" 
-              className="absolute top-6 left-2 z-20 w-[95px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-6 left-2 z-20 w-[95px] short:w-[70px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ y: [0, -3, 0], scale: [1, 1.05, 1] }}
               transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -222,7 +222,7 @@ const LandingPage = () => {
             <motion.img 
               src={element1} 
               alt="No Lie Sticker" 
-              className="absolute top-[58%] left-[2px] z-20 w-[80px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-[58%] left-[2px] z-20 w-[80px] short:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-6, -2, -6], y: [0, -3, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -231,30 +231,29 @@ const LandingPage = () => {
             <motion.img 
               src={element2} 
               alt="My Result Sticker" 
-              className="absolute top-[12%] right-[2px] z-20 w-[78px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute top-[12%] right-[2px] z-20 w-[78px] short:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [4, 8, 4], y: [0, 3, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
             />
 
             {/* Headline Title */}
             <h1 
-              className="text-[2.6rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-4"
+              className="text-[2.6rem] short:text-[2.2rem] leading-[0.95] font-black text-[#E30613] font-display uppercase tracking-tight transform -rotate-[4.5deg] select-none mt-4 short:mt-2"
               style={{ 
                 textShadow: '-3.2px -3.2px 0 #fff, 3.2px -3.2px 0 #fff, -3.2px 3.2px 0 #fff, 3.2px 3.2px 0 #fff, 5px 5px 0px rgba(0,0,0,0.15)' 
               }}
             >
               WHICH
-              <span className="block text-[3.4rem] my-1 font-black leading-[0.9]">MUNCH IT</span>
-              <span className="block text-[3rem] my-1 leading-[0.9]">SNACK</span>
-              <span className="block text-[2.8rem] leading-[0.9]">ARE YOU?</span>
+              <span className="block text-[3.4rem] short:text-[2.8rem] my-1 short:my-0.5 font-black leading-[0.9]">MUNCH IT</span>
+              <span className="block text-[3rem] short:text-[2.5rem] my-1 short:my-0.5 leading-[0.9]">SNACK</span>
+              <span className="block text-[2.8rem] short:text-[2.3rem] leading-[0.9]">ARE YOU?</span>
             </h1>
             <p className="mt-2 text-[10px] font-black text-[#0099FF] max-w-[245px] leading-tight tracking-[0.12em] uppercase font-sans text-center transform -rotate-[4.5deg]">
               7 QUICK QUESTIONS<br/>ONE DANGEROUSLY ACCURATE RESULT
             </p>
           </div>
-
           {/* ── HERO IMAGE ── */}
-          <div className="flex-1 flex items-end justify-center min-h-[220px] relative mt-2 px-4 z-0">
+          <div className="flex-1 flex items-end justify-center min-h-[220px] short:min-h-[180px] relative mt-2 short:mt-0 px-4 z-0">
             {/* Tall black gradient mask behind the models to blend yellow background into the black bottom actions seamlessly */}
             <div className="absolute bottom-0 left-0 right-0 h-[280px] bg-gradient-to-t from-black via-black/45 to-transparent z-0 pointer-events-none" />
             
@@ -262,7 +261,7 @@ const LandingPage = () => {
             <motion.img 
               src={element4} 
               alt="I Feel So Attacked Sticker" 
-              className="absolute bottom-[230px] right-[4px] z-20 w-[90px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute bottom-[230px] short:bottom-[180px] right-[4px] z-20 w-[90px] short:w-[70px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-4, 2, -4], y: [0, -3, 0] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
             />
@@ -270,7 +269,7 @@ const LandingPage = () => {
             <img 
               src={modeellls} 
               alt="Munch It Personality Squad" 
-              className="w-full max-h-[350px] object-contain object-bottom filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.25)] transform scale-[1.05] select-none relative z-10"
+              className="w-full max-h-[350px] short:max-h-[280px] object-contain object-bottom filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.25)] transform scale-[1.05] select-none relative z-10"
             />
           </div>
 

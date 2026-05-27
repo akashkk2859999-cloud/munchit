@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'short': { 'raw': '(max-height: 700px)' },
+      },
       colors: {
         munchit: {
           yellow: '#FFF200',
