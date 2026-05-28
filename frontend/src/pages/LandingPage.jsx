@@ -268,7 +268,7 @@ const LandingPage = () => {
             <motion.img 
               src={element4} 
               alt="I Feel So Attacked Sticker" 
-              className="absolute bottom-[300px] short:bottom-[245px] xshort:bottom-[150px] right-[1px] short:right-[2px] xshort:right-[4px] z-20 w-[100px] short:w-[86px] xshort:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute bottom-[340px] short:bottom-[280px] xshort:bottom-[180px] right-[1px] short:right-[2px] xshort:right-[4px] z-20 w-[100px] short:w-[86px] xshort:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-4, 2, -4], y: [0, -3, 0] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
             />
