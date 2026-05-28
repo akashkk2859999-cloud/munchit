@@ -351,7 +351,7 @@ const QuizPage = () => {
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── APP CANVAS — allows vertical scrolling on extremely small viewports to ensure backup navigation access ── */}
-        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-hidden px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-4 short:pb-1 xshort:pb-0.5 select-none scrollbar-none">
+        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-y-auto px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-4 short:pb-1 xshort:pb-0.5 select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
           <div className="flex justify-between items-center w-full mb-2 short:mb-1 xshort:mb-0 relative z-10 flex-shrink-0">
@@ -431,7 +431,7 @@ const QuizPage = () => {
 
                   {/* ── QUESTION CARD — Compact layout, fits on single screen ── */}
                   <motion.div 
-                    className="relative mt-2 short:mt-1 xshort:mt-0.5 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2"
+                    className="relative mt-10 short:mt-7 xshort:mt-3 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2 top-7 short:top-5 xshort:top-3"
                     animate={{ 
                       y: [0, -3, 0],
                       rotate: [0, -0.5, 0.5, 0]
@@ -449,7 +449,7 @@ const QuizPage = () => {
 
                     {/* Dark torn-edge paper card — dynamically scaled heights with vibrant neon teal border */}
                     <div 
-                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-12 pb-20 short:pt-10 short:pb-16 min-h-[240px] short:min-h-[215px] xshort:min-h-[110px] xshort:pt-4 xshort:pb-8 xshort:border-[2.5px] xshort:shadow-[3px_3px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
+                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-12 pb-20 short:pt-10 short:pb-16 min-h-[240px] short:min-h-[165px] xshort:min-h-[110px] xshort:pt-4 xshort:pb-8 xshort:border-[2.5px] xshort:shadow-[3px_3px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
                       style={{
                         clipPath: "polygon(0% 0%, 100% 0%, 100% 87%, 97% 90%, 94% 86%, 90% 89%, 87% 85%, 84% 88%, 81% 85%, 78% 88%, 74% 85%, 71% 89%, 68% 86%, 65% 89%, 62% 85%, 59% 88%, 55% 85%, 52% 89%, 49% 86%, 46% 89%, 43% 85%, 40% 88%, 36% 85%, 33% 89%, 30% 86%, 27% 89%, 24% 85%, 21% 88%, 17% 85%, 14% 89%, 11% 86%, 8% 89%, 5% 85%, 0% 88%)"
                       }}
@@ -468,7 +468,7 @@ const QuizPage = () => {
                 </div>
 
                 {/* ── OPTION CARDS — spread evenly across available space ── */}
-                <div className="flex-1 flex flex-col justify-center gap-4 short:gap-3 xshort:gap-1.5 min-h-0 px-4 xshort:px-2 w-full">
+                <div className="flex-1 flex flex-col justify-center gap-4 short:gap-2 xshort:gap-1.5 min-h-0 px-4 xshort:px-2 w-full">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = selectedOption === option.id;
                     const style = optionStyles[idx];
@@ -480,7 +480,7 @@ const QuizPage = () => {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05, duration: 0.2 }}
-                        className={`w-full text-left px-6 py-[23px] short:px-5 short:py-[18px] xshort:px-3 xshort:py-[9px] rounded-2xl xshort:rounded-xl border-2 transition-all duration-150 flex items-center gap-4 xshort:gap-2 relative group ${
+                        className={`w-full text-left px-6 py-[23px] short:px-5 short:py-[13px] xshort:px-3 xshort:py-[9px] rounded-2xl xshort:rounded-xl border-2 transition-all duration-150 flex items-center gap-4 xshort:gap-2 relative group ${
                           isSelected 
                             ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.01] z-10' 
                             : 'bg-white border-[#00E676] hover:bg-white text-gray-800 shadow-sm'
