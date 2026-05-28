@@ -345,13 +345,13 @@ const QuizPage = () => {
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── PHONE CONTAINER ── */}
-      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative overflow-hidden flex flex-col z-10 transition-all duration-300">
+      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 relative overflow-hidden flex flex-col z-10 transition-all duration-300">
         
         {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── APP CANVAS — allows vertical scrolling on extremely small viewports to ensure backup navigation access ── */}
-        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-y-auto px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-4 md:pb-6 pb-safe select-none scrollbar-none">
+        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-y-auto px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-20 short:pb-16 xshort:pb-14 select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
           <div className="flex justify-between items-center w-full mb-2 short:mb-1 xshort:mb-0 relative z-10 flex-shrink-0">
@@ -500,44 +500,48 @@ const QuizPage = () => {
                   })}
                 </div>
 
-                {/* ── FOOTER NAVIGATION ── */}
-                <div className="flex items-center justify-between w-full pt-2 short:pt-1 xshort:pt-0.5 relative z-10 flex-shrink-0">
-                  {/* Stateful Back Button (Always visible; goes to landing page on Q1) */}
-                  <button
-                    onClick={currentQuestionIndex > 0 ? handleBack : () => navigate('/')}
-                    className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
-                  >
-                    ← BACK
-                  </button>
-
-                  {/* Skip Button */}
-                  <button
-                    onClick={handleSkip}
-                    className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer bg-[#E30613] hover:bg-red-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
-                  >
-                    SKIP ➔
-                  </button>
-
-                  {/* Continue Button */}
-                  <motion.button
-                    onClick={handleContinue}
-                    disabled={!selectedOption}
-                    whileTap={selectedOption ? { scale: 0.9, y: 2 } : {}}
-                    className={`rounded-full w-11 h-11 short:w-9 short:h-9 xshort:w-8 xshort:h-8 transition-all flex items-center justify-center shadow-lg cursor-pointer ${
-                      selectedOption 
-                        ? 'bg-[#E30613] hover:bg-red-700 text-white active:scale-95' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <ArrowRight size={22} strokeWidth={4} className="text-white" />
-                  </motion.button>
-                </div>
-
               </motion.div>
             )}
           </AnimatePresence>
 
         </div>
+
+        {/* ── PINNED FOOTER NAVIGATION — always visible above iOS browser chrome ── */}
+        {!isSubmitting && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 bg-munchit-yellow px-4 pt-2 pb-3 pb-safe">
+            <div className="flex items-center justify-between w-full">
+              {/* Stateful Back Button (Always visible; goes to landing page on Q1) */}
+              <button
+                onClick={currentQuestionIndex > 0 ? handleBack : () => navigate('/')}
+                className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
+              >
+                ← BACK
+              </button>
+
+              {/* Skip Button */}
+              <button
+                onClick={handleSkip}
+                className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer bg-[#E30613] hover:bg-red-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
+              >
+                SKIP ➔
+              </button>
+
+              {/* Continue Button */}
+              <motion.button
+                onClick={handleContinue}
+                disabled={!selectedOption}
+                whileTap={selectedOption ? { scale: 0.9, y: 2 } : {}}
+                className={`rounded-full w-11 h-11 short:w-9 short:h-9 xshort:w-8 xshort:h-8 transition-all flex items-center justify-center shadow-lg cursor-pointer ${
+                  selectedOption 
+                    ? 'bg-[#E30613] hover:bg-red-700 text-white active:scale-95' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <ArrowRight size={22} strokeWidth={4} className="text-white" />
+              </motion.button>
+            </div>
+          </div>
+        )}
 
         {/* ── VERIFICATION PROMPT OVERLAY (If modal closed but final answers ready) ── */}
         {finalAnswers && !isModalOpen && !success && (
