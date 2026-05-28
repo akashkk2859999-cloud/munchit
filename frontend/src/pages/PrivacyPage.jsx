@@ -16,7 +16,13 @@ const PrivacyPage = () => {
         {/* Header Bar */}
         <div className="bg-munchit-red text-white px-5 pt-10 md:pt-12 pb-4 flex items-center gap-3 relative z-20">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/');
+              }
+            }}
             className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
             aria-label="Go back"
           >

@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       screens: {
-        'short': { 'raw': '(max-height: 820px)' },
+        'short': { 'raw': '(max-height: 932px)' },
+        'xshort': { 'raw': '(max-height: 780px)' },
       },
       colors: {
         munchit: {

@@ -64,6 +64,25 @@ const QuizPage = () => {
     }
   }, []);
 
+  // Lock scroll on html/body to prevent ANY scroll on all mobile browsers
+  useEffect(() => {
+    const preventScroll = (e) => {
+      // Allow scrolling inside modal content (overflow-y-auto elements)
+      if (e.target.closest('.overflow-y-auto')) return;
+      e.preventDefault();
+    };
+
+    document.documentElement.classList.add('quiz-lock-scroll');
+    document.body.classList.add('quiz-lock-scroll');
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      document.documentElement.classList.remove('quiz-lock-scroll');
+      document.body.classList.remove('quiz-lock-scroll');
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, []);
+
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
@@ -326,16 +345,16 @@ const QuizPage = () => {
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-munchit-red/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── PHONE CONTAINER ── */}
-      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300">
+      <div className="w-full h-[100dvh] md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-munchit-yellow md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative overflow-hidden flex flex-col z-10 transition-all duration-300">
         
         {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── APP CANVAS — allows vertical scrolling on extremely small viewports to ensure backup navigation access ── */}
-        <div className="flex-1 flex flex-col h-full relative overflow-y-auto px-4 pt-6 short:pt-2 md:pt-10 pb-4 short:pb-1 select-none scrollbar-none">
+        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-hidden px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-4 short:pb-1 xshort:pb-0.5 select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
-          <div className="flex justify-between items-center w-full mb-2 relative z-10">
+          <div className="flex justify-between items-center w-full mb-2 short:mb-1 xshort:mb-0 relative z-10 flex-shrink-0">
             {/* Logo */}
             <div className="relative h-9 flex items-center">
               <img 
@@ -381,14 +400,14 @@ const QuizPage = () => {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -60, scale: 0.98 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="flex flex-col flex-1 w-full justify-between h-[calc(100%-3rem)] min-h-[400px] short:min-h-0"
+                className="flex flex-col flex-1 w-full min-h-0"
               >
                 
                 {/* ── TOP GROUP (PROGRESS & QUESTION) ── */}
-                <div className="w-full flex flex-col">
+                <div className="w-full flex flex-col flex-shrink-0">
                   
                   {/* ── PROGRESS BAR — centered, 65% width, with MunchIt stick tracking ── */}
-                  <div className="mx-auto w-[65%] max-w-[240px] relative mb-2 short:mb-1 flex items-center h-8 short:h-6">
+                  <div className="mx-auto w-[65%] max-w-[240px] relative mb-1 xshort:mb-0.5 flex items-center h-7 short:h-5 xshort:h-4">
                     {/* Track */}
                     <div className="bg-[#E0F2F1] rounded-full h-3 w-full overflow-hidden relative border border-black/10">
                       {/* Vibrant Green Progress Fill */}
@@ -412,7 +431,7 @@ const QuizPage = () => {
 
                   {/* ── QUESTION CARD — Compact layout, fits on single screen ── */}
                   <motion.div 
-                    className="relative mt-3 short:mt-1 mb-2 short:mb-1 px-4"
+                    className="relative mt-2 short:mt-1 xshort:mt-0.5 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2"
                     animate={{ 
                       y: [0, -3, 0],
                       rotate: [0, -0.5, 0.5, 0]
@@ -430,7 +449,7 @@ const QuizPage = () => {
 
                     {/* Dark torn-edge paper card — dynamically scaled heights with vibrant neon teal border */}
                     <div 
-                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-10 pb-20 short:pt-5 short:pb-10 min-h-[190px] short:min-h-[120px] shadow-[4px_4px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
+                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-12 pb-20 short:pt-10 short:pb-16 min-h-[240px] short:min-h-[215px] xshort:min-h-[110px] xshort:pt-4 xshort:pb-8 xshort:border-[2.5px] xshort:shadow-[3px_3px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
                       style={{
                         clipPath: "polygon(0% 0%, 100% 0%, 100% 87%, 97% 90%, 94% 86%, 90% 89%, 87% 85%, 84% 88%, 81% 85%, 78% 88%, 74% 85%, 71% 89%, 68% 86%, 65% 89%, 62% 85%, 59% 88%, 55% 85%, 52% 89%, 49% 86%, 46% 89%, 43% 85%, 40% 88%, 36% 85%, 33% 89%, 30% 86%, 27% 89%, 24% 85%, 21% 88%, 17% 85%, 14% 89%, 11% 86%, 8% 89%, 5% 85%, 0% 88%)"
                       }}
@@ -439,7 +458,7 @@ const QuizPage = () => {
                       <div className="absolute inset-1.5 border border-dashed border-[#FFF200]/20 rounded-md pointer-events-none z-10" />
 
                       <h2 
-                        className="text-[20px] md:text-[23px] short:text-[14px] text-white font-display font-black leading-[1.38] uppercase tracking-normal max-w-[315px] mx-auto w-full relative z-10"
+                        className="text-[24px] md:text-[27px] short:text-[20px] xshort:text-[14px] text-white font-display font-black leading-[1.3] xshort:leading-[1.2] uppercase tracking-normal max-w-[315px] mx-auto w-full relative z-10"
                         style={{ textWrap: 'balance' }}
                       >
                         {getHighlightedText(currentQuestion.text)}
@@ -449,7 +468,7 @@ const QuizPage = () => {
                 </div>
 
                 {/* ── OPTION CARDS — spread evenly across available space ── */}
-                <div className="flex-1 flex flex-col justify-evenly px-4 w-full">
+                <div className="flex-1 flex flex-col justify-center gap-4 short:gap-3 xshort:gap-1.5 min-h-0 px-4 xshort:px-2 w-full">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = selectedOption === option.id;
                     const style = optionStyles[idx];
@@ -461,19 +480,19 @@ const QuizPage = () => {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05, duration: 0.2 }}
-                        className={`w-full text-left px-4 py-3 short:py-1.5 rounded-2xl border-2 transition-all duration-150 flex items-center gap-3 relative group ${
+                        className={`w-full text-left px-6 py-[23px] short:px-5 short:py-[18px] xshort:px-3 xshort:py-[9px] rounded-2xl xshort:rounded-xl border-2 transition-all duration-150 flex items-center gap-4 xshort:gap-2 relative group ${
                           isSelected 
                             ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.01] z-10' 
                             : 'bg-white border-[#00E676] hover:bg-white text-gray-800 shadow-sm'
                         }`}
                       >
                         {/* Plain floating emoji prefix */}
-                        <span className="text-2xl select-none flex-shrink-0 filter drop-shadow-sm">
+                        <span className="text-3xl short:text-2xl xshort:text-lg select-none flex-shrink-0 filter drop-shadow-sm">
                           {style.emoji}
                         </span>
 
                         {/* Option text — Bolder and more legible */}
-                        <span className="font-sans font-extrabold text-[13px] short:text-[11px] tracking-tight leading-snug uppercase text-slate-950 flex-1">
+                        <span className="font-sans font-extrabold text-[15px] short:text-[13px] xshort:text-[11px] tracking-tight leading-snug xshort:leading-tight uppercase text-slate-950 flex-1">
                           {option.text}
                         </span>
                       </motion.button>
@@ -482,11 +501,11 @@ const QuizPage = () => {
                 </div>
 
                 {/* ── FOOTER NAVIGATION ── */}
-                <div className="flex items-center justify-between w-full pt-2.5 short:pt-1 relative z-10">
+                <div className="flex items-center justify-between w-full pt-2 short:pt-1 xshort:pt-0.5 relative z-10 flex-shrink-0">
                   {/* Stateful Back Button (Always visible; goes to landing page on Q1) */}
                   <button
                     onClick={currentQuestionIndex > 0 ? handleBack : () => navigate('/')}
-                    className="font-sans font-black text-xs text-white uppercase tracking-wider active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer bg-slate-800 hover:bg-slate-700 px-5 py-2.5 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
+                    className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
                   >
                     ← BACK
                   </button>
@@ -494,7 +513,7 @@ const QuizPage = () => {
                   {/* Skip Button */}
                   <button
                     onClick={handleSkip}
-                    className="font-sans font-black text-xs text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer bg-[#E30613] hover:bg-red-700 px-5 py-2.5 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
+                    className="font-sans font-black text-xs xshort:text-[10px] text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer bg-[#E30613] hover:bg-red-700 px-4 py-2 short:px-3 short:py-1.5 xshort:px-2.5 xshort:py-1 rounded-full border-2 border-black shadow-[2px_2px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
                   >
                     SKIP ➔
                   </button>
@@ -504,7 +523,7 @@ const QuizPage = () => {
                     onClick={handleContinue}
                     disabled={!selectedOption}
                     whileTap={selectedOption ? { scale: 0.9, y: 2 } : {}}
-                    className={`rounded-full w-12 h-12 short:w-10 short:h-10 transition-all flex items-center justify-center shadow-lg cursor-pointer ${
+                    className={`rounded-full w-11 h-11 short:w-9 short:h-9 xshort:w-8 xshort:h-8 transition-all flex items-center justify-center shadow-lg cursor-pointer ${
                       selectedOption 
                         ? 'bg-[#E30613] hover:bg-red-700 text-white active:scale-95' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
