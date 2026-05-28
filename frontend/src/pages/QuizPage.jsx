@@ -338,7 +338,7 @@ const QuizPage = () => {
   ];
 
   return (
-    <div className="min-h-screen h-[100dvh] w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
+    <div className="min-h-screen h-[100dvh] w-full bg-munchit-yellow md:bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
       
       {/* ── Desktop ambient glow ── */}
       <div className="hidden md:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-munchit-yellow/10 rounded-full blur-[100px] pointer-events-none" />
@@ -468,7 +468,7 @@ const QuizPage = () => {
                 </div>
 
                 {/* ── OPTION CARDS — spread evenly across available space ── */}
-                <div className="flex-1 flex flex-col justify-center gap-4 short:gap-2 xshort:gap-1.5 min-h-0 px-4 xshort:px-2 w-full">
+                <div className="flex-1 flex flex-col justify-center gap-3 short:gap-2 xshort:gap-1.5 min-h-0 px-4 xshort:px-2 w-full">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = selectedOption === option.id;
                     const style = optionStyles[idx];
@@ -480,7 +480,7 @@ const QuizPage = () => {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05, duration: 0.2 }}
-                        className={`w-full text-left px-6 py-[23px] short:px-5 short:py-[13px] xshort:px-3 xshort:py-[9px] rounded-2xl xshort:rounded-xl border-2 transition-all duration-150 flex items-center gap-4 xshort:gap-2 relative group ${
+                        className={`w-full text-left px-6 py-[18px] short:px-5 short:py-[12px] xshort:px-3 xshort:py-[8px] rounded-2xl xshort:rounded-xl border-2 transition-all duration-150 flex items-center gap-4 xshort:gap-2 relative group ${
                           isSelected 
                             ? 'bg-white border-black shadow-[3px_3px_0_0_#000] transform scale-[1.01] z-10' 
                             : 'bg-white border-[#00E676] hover:bg-white text-gray-800 shadow-sm'
