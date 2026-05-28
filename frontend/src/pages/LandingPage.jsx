@@ -135,7 +135,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
+    <div className="min-h-screen w-full bg-munchit-yellow md:bg-slate-950 flex items-center justify-center py-0 md:py-8 md:px-4 overflow-hidden relative">
       
       {/* ── BACKGROUND AMBIENT EFFECTS (Desktop only) ── */}
       <div className="hidden md:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-munchit-yellow/10 rounded-full blur-[100px] pointer-events-none" />

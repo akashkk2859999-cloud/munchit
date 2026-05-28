@@ -351,7 +351,7 @@ const QuizPage = () => {
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── APP CANVAS — allows vertical scrolling on extremely small viewports to ensure backup navigation access ── */}
-        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-y-auto px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-[84px] short:pb-[72px] xshort:pb-[48px] md:pb-6 select-none scrollbar-none">
+        <div className="flex-1 flex flex-col h-full min-h-0 relative overflow-y-auto px-4 pt-6 short:pt-2 xshort:pt-1 md:pt-10 pb-4 md:pb-6 pb-safe select-none scrollbar-none">
           
           {/* ── TOP HEADER ── */}
           <div className="flex justify-between items-center w-full mb-2 short:mb-1 xshort:mb-0 relative z-10 flex-shrink-0">
@@ -431,7 +431,7 @@ const QuizPage = () => {
 
                   {/* ── QUESTION CARD — Compact layout, fits on single screen ── */}
                   <motion.div 
-                    className="relative mt-10 short:mt-7 xshort:mt-3 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2 top-7 short:top-5 xshort:top-3"
+                    className="relative mt-6 short:mt-4 xshort:mt-2 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2"
                     animate={{ 
                       y: [0, -3, 0],
                       rotate: [0, -0.5, 0.5, 0]

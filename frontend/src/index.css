@@ -64,6 +64,14 @@
   .text-glow {
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.1);
   }
+
+  /* iOS safe-area-aware bottom padding — accounts for home indicator + browser bar */
+  .pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top, 0px));
+  }
 }
 
 /* Subtle pattern background */
