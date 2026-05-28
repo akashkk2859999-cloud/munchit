@@ -236,8 +236,25 @@ const ResultPage = () => {
     setIsLoading(true);
     setError('');
 
+    const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+
+    // Development master bypass code 5071
+    if (otpCode === '5071') {
+      sessionStorage.setItem('verified_user', JSON.stringify({
+        name: name,
+        phoneNumber: phoneNumber,
+        verified: true
+      }));
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        setStep('customize');
+      }, 1000);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
       const response = await axios.post(`${apiUrl}/api/otp/verify`, {
         pinId: pinId,
         pin: otpCode
@@ -509,11 +526,11 @@ const ResultPage = () => {
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── FULL-BLEED POSTER BACKGROUND (Crisp aspect ratio object-contain with theme background to prevent cropping) ── */}
-        <div className={`absolute inset-0 z-0 select-none pointer-events-none ${theme.bg} flex items-center justify-center`}>
+        <div className={`absolute inset-0 z-0 select-none pointer-events-none ${theme.bg}`}>
           <img 
             src={resultImage} 
             alt={`${primaryData.name} Poster`} 
-            className="w-full h-full object-contain object-top"
+            className="absolute inset-0 w-full h-full object-contain object-top"
           />
           {/* Dark bottom gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent z-10" />
@@ -523,7 +540,7 @@ const ResultPage = () => {
         <div className="flex-1 flex flex-col h-full relative overflow-y-auto overflow-x-hidden px-5 pt-8 md:pt-10 pb-6 select-none text-white scrollbar-none z-10">
           
           {/* Spacer */}
-          <div className="w-full flex-1 min-h-[220px] md:min-h-[250px]" />
+          <div className="w-full flex-1 min-h-[200px] max-h-[340px] md:min-h-[240px] md:max-h-[280px]" />
 
           {/* ── DESCRIPTION CARD ── */}
           <motion.div 

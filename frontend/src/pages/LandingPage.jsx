@@ -195,8 +195,11 @@ const LandingPage = () => {
             </button>
           </div>
 
+          {/* Flexible Top Spacer — only visible on tall screens (>932px), hidden on short/xshort */}
+          <div className="flex-1 min-h-[12px] max-h-[80px] flex-shrink-0 short:hidden" />
+
           {/* ── HEADLINE SECTION ── */}
-          <div className="px-5 mt-16 short:mt-9 xshort:mt-1 mb-2 short:mb-1 relative z-10 text-center flex flex-col items-center justify-center flex-shrink-0">
+          <div className="px-5 mt-2 short:mt-16 xshort:mt-1 mb-2 short:mb-1 relative z-10 text-center flex flex-col items-center justify-center flex-shrink-0">
             
             {/* Styled outline drawings & stickers */}
             {/* Element 3: Fire Sticker (Top-Left) — pushed up and scaled down */}
@@ -251,7 +254,7 @@ const LandingPage = () => {
             </p>
           </div>
           {/* ── HERO IMAGE ── */}
-          <div className="flex-1 flex items-end justify-center min-h-[220px] short:min-h-[180px] xshort:min-h-[140px] relative mt-8 short:mt-4 xshort:mt-0 px-4 z-0">
+          <div className="flex-1 flex items-end justify-center min-h-[220px] max-h-[420px] short:max-h-none short:min-h-[180px] xshort:min-h-[140px] relative mt-8 short:mt-4 xshort:mt-0 px-4 z-0">
             {/* Very subtle low-opacity black gradient overlay to blend the cut-off feet seamlessly */}
             <div className="absolute bottom-0 left-0 right-0 h-[100px] short:h-[70px] bg-gradient-to-t from-black/5 via-black/2 to-transparent z-15 pointer-events-none" />
             
@@ -259,7 +262,7 @@ const LandingPage = () => {
             <motion.img 
               src={element1} 
               alt="No Lie Sticker" 
-              className="absolute bottom-[380px] short:bottom-[330px] xshort:bottom-[225px] left-[1px] short:left-[2px] xshort:left-[4px] z-20 w-[84px] short:w-[70px] xshort:w-[52px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute bottom-[380px] short:bottom-[330px] xshort:bottom-[225px] left-[1px] short:-left-1.5 xshort:left-[4px] z-20 w-[84px] short:w-[70px] xshort:w-[52px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-6, -2, -6], y: [0, -3, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -268,7 +271,7 @@ const LandingPage = () => {
             <motion.img 
               src={element4} 
               alt="I Feel So Attacked Sticker" 
-              className="absolute bottom-[340px] short:bottom-[280px] xshort:bottom-[180px] right-[1px] short:right-[2px] xshort:right-[4px] z-20 w-[100px] short:w-[86px] xshort:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
+              className="absolute bottom-[340px] short:bottom-[280px] xshort:bottom-[180px] right-[1px] short:-right-1 xshort:right-[4px] z-20 w-[100px] short:w-[86px] xshort:w-[60px] object-contain drop-shadow-md select-none pointer-events-none"
               animate={{ rotate: [-4, 2, -4], y: [0, -3, 0] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
             />

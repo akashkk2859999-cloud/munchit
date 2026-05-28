@@ -5,6 +5,7 @@ import axios from 'axios';
 import { ArrowRight, X, Phone, User, Shield, Check, AlertCircle } from 'lucide-react';
 import { questions } from '../data/quizData';
 import munchItLogo from '../assets/Munch It logo.png';
+import stixImg from '../assets/stix.png';
 
 const MunchItStickIcon = ({ className = "" }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] ${className}`}>
@@ -162,8 +163,42 @@ const QuizPage = () => {
     setIsLoading(true);
     setError('');
 
+    const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+
+    // Development master bypass code 5071
+    if (otpCode === '5071') {
+      try {
+        setSuccess(true);
+        sessionStorage.setItem('verified_user', JSON.stringify({
+          name: name,
+          phoneNumber: phoneNumber,
+          verified: true
+        }));
+
+        // Submit quiz to backend
+        const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
+          answers: finalAnswers,
+          name: name,
+          phoneNumber: phoneNumber
+        });
+
+        setTimeout(() => {
+          setIsModalOpen(false);
+          navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+        }, 1500);
+      } catch (err) {
+        console.error('[OTP Bypass] Submit error:', err);
+        setTimeout(() => {
+          setIsModalOpen(false);
+          navigate('/result', { state: { fallbackAnswers: finalAnswers } });
+        }, 1500);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/backend';
       const response = await axios.post(`${apiUrl}/api/otp/verify`, {
         pinId: pinId,
         pin: otpCode
@@ -383,7 +418,11 @@ const QuizPage = () => {
                 <div className="relative flex items-center justify-center mb-6">
                   <div className="w-20 h-20 border-[6px] border-black/10 border-t-munchit-red rounded-full animate-spin"></div>
                   <span className="absolute flex items-center justify-center animate-bounce">
-                    <MunchItStickIcon className="w-8 h-8" />
+                    <img 
+                      src={stixImg} 
+                      alt="Munch It Stick" 
+                      className="w-12 h-12 object-contain transform rotate-[15deg] filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]" 
+                    />
                   </span>
                 </div>
                 <h2 className="text-2xl font-display font-black text-black tracking-tight uppercase mb-1">
@@ -422,16 +461,20 @@ const QuizPage = () => {
                     <motion.div 
                       className="absolute top-1/2 -translate-y-1/2 z-10 pointer-events-none select-none flex items-center justify-center"
                       initial={{ left: `${((currentQuestionIndex) / questions.length) * 100}%` }}
-                      animate={{ left: `calc(${progress}% - 12px)` }}
+                      animate={{ left: `calc(${progress}% - 20px)` }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
                     >
-                      <MunchItStickIcon className="w-6 h-6" />
+                      <img 
+                        src={stixImg} 
+                        alt="Munch It Stick" 
+                        className="w-10 h-10 object-contain transform rotate-[15deg] filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]" 
+                      />
                     </motion.div>
                   </div>
 
                   {/* ── QUESTION CARD — Compact layout, fits on single screen ── */}
                   <motion.div 
-                    className="relative mt-6 short:mt-4 xshort:mt-2 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2"
+                    className="relative mt-10 short:mt-12 xshort:mt-8 mb-1 short:mb-0 xshort:mb-0.5 px-4 xshort:px-2"
                     animate={{ 
                       y: [0, -3, 0],
                       rotate: [0, -0.5, 0.5, 0]
@@ -449,7 +492,7 @@ const QuizPage = () => {
 
                     {/* Dark torn-edge paper card — dynamically scaled heights with vibrant neon teal border */}
                     <div 
-                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-12 pb-20 short:pt-10 short:pb-16 min-h-[240px] short:min-h-[165px] xshort:min-h-[110px] xshort:pt-4 xshort:pb-8 xshort:border-[2.5px] xshort:shadow-[3px_3px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
+                      className="bg-gray-900 border-[3.5px] border-[#00C9C9] px-6 short:px-4 pt-14 pb-24 short:pt-11 short:pb-20 min-h-[270px] short:min-h-[195px] xshort:min-h-[130px] xshort:pt-6 xshort:pb-10 xshort:border-[2.5px] xshort:shadow-[3px_3px_0_0_#000] relative flex flex-col justify-center text-center overflow-hidden"
                       style={{
                         clipPath: "polygon(0% 0%, 100% 0%, 100% 87%, 97% 90%, 94% 86%, 90% 89%, 87% 85%, 84% 88%, 81% 85%, 78% 88%, 74% 85%, 71% 89%, 68% 86%, 65% 89%, 62% 85%, 59% 88%, 55% 85%, 52% 89%, 49% 86%, 46% 89%, 43% 85%, 40% 88%, 36% 85%, 33% 89%, 30% 86%, 27% 89%, 24% 85%, 21% 88%, 17% 85%, 14% 89%, 11% 86%, 8% 89%, 5% 85%, 0% 88%)"
                       }}
