@@ -508,7 +508,7 @@ const QuizPage = () => {
 
         {/* ── FOOTER NAVIGATION — flex-shrink-0 ensures it always occupies space at bottom ── */}
         {!isSubmitting && (
-          <div className="flex-shrink-0 bg-munchit-yellow px-4 pt-2 pb-3 z-30">
+          <div className="flex-shrink-0 bg-munchit-yellow px-4 pt-2 pb-14 z-30">
             <div className="flex items-center justify-between w-full">
               {/* Stateful Back Button */}
               <button
