@@ -1,13 +1,41 @@
-# Use a slim Node.js base image
-FROM node:20-bookworm-slim
+# ==========================================
+# STAGE 1: Build Stage
+# ==========================================
+FROM node:20-bookworm-slim AS build
 
-# Set environment variable to make frontend and python builds non-interactive
+WORKDIR /app
+
+# Copy root configurations and dependency files
+COPY package.json package-lock.json* ./
+COPY frontend/package.json ./frontend/
+COPY backend/package.json ./backend/
+
+# Install Node.js dependencies for root, frontend, and backend using npm workspaces
+RUN npm ci --include=dev
+
+# Copy the rest of the application files
+COPY . .
+
+# Build the React frontend statically to frontend/dist
+RUN npm run build
+
+# ==========================================
+# STAGE 2: Production Stage
+# ==========================================
+# Use a glibc-compatible Node.js image to ensure clean precompiled Python wheels support (instead of musl/alpine)
+FROM node:20-bookworm-slim AS production
+
+# Set environment variable to make package installations non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
+ENV NODE_ENV=production
+ENV PORT=80
+
+WORKDIR /app
 
 # Install system dependencies:
-# 1. Python 3 and pip
-# 2. Build-essential tools (for compilation if needed)
-# 3. OpenCV headless requirements (libglib2.0-0, libgl1, libgomp1)
+# 1. Python 3 and pip virtual environment creator
+# 2. OpenCV headless and ONNX dependencies (libglib2.0-0, libgl1, libgomp1)
+# 3. PM2 for production process management
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
@@ -17,40 +45,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgl1 \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pm2
 
-# Verify installations
-RUN python3 --version && pip3 --version
+# Create a secure non-root user (following Kellogg's corporate best practices)
+RUN useradd -m nodeuser && chown -R nodeuser:nodeuser /app
 
-# Set work directory
-WORKDIR /app
+# Copy only the necessary files from the build stage
+COPY --from=build --chown=nodeuser:nodeuser /app /app
 
-# Copy root configurations and dependency files
-COPY package.json package-lock.json* ./
-COPY frontend/package.json ./frontend/
-COPY backend/package.json backend/requirements.txt ./backend/
-
-# Install Node.js dependencies for root, frontend, and backend using npm workspaces
-RUN npm ci --include=dev
-
-# Copy the rest of the application files
-COPY . .
-
-# Build the React frontend
-RUN npm run build
-
-# Set up Python virtual environment and install pip requirements in backend
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Set up Python virtual environment and install pip requirements inside the app directory
+USER nodeuser
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
 RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip3 install --no-cache-dir -r backend/requirements.txt
+    pip3 install --no-cache-dir -r /app/backend/requirements.txt
 
-# Expose port (default Node.js port is 5000 or port 80 as Azure expects)
-EXPOSE 5000 80
+# Expose production port
+EXPOSE 80
 
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=80
-
-# Start command
-CMD ["npm", "start"]
+# Run the backend Express server using PM2 (highly resilient runtime monitor)
+CMD ["pm2-runtime", "start", "backend/src/server.js", "--name", "munchit-ue"]
