@@ -115,7 +115,8 @@ const executeSwapJob = async (job) => {
     cmdArgs.push(
       '--source', sourcePath,
       '--target', targetPath,
-      '--output', outputPath
+      '--output', outputPath,
+      '--cpu'
     );
 
     console.log(`🚀 [FaceSwap] Spawning Python process...`);

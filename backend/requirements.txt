@@ -1,0 +1,6 @@
+# Lightweight CPU packages for stable cloud deployments (e.g. Azure App Service / VMs)
+onnxruntime>=1.15.0
+insightface>=0.7.3
+opencv-python-headless>=4.7.0  # Headless OpenCV guarantees no missing GUI library crashes in cloud
+numpy>=1.23.0
+pillow>=9.0.0
