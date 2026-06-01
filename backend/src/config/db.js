@@ -64,7 +64,8 @@ async function initializeDatabase() {
     await dbQuery(`
       ALTER TABLE quiz_submissions 
       ADD COLUMN IF NOT EXISTS name TEXT,
-      ADD COLUMN IF NOT EXISTS phone_number TEXT
+      ADD COLUMN IF NOT EXISTS phone_number TEXT,
+      ADD COLUMN IF NOT EXISTS swapped_image TEXT
     `);
     
     console.log('✅ Database tables initialized (MunchIt)');

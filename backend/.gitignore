@@ -1,2 +1,14 @@
 node_modules/
 .env
+
+# Dynamic/Generated folders
+uploads/
+results/
+templates/
+models/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store

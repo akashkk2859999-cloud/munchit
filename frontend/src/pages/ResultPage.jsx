@@ -31,6 +31,12 @@ import newSour from '../assets/NEWSOUR-CREAM.jpg.jpeg';
 import newCreamy from '../assets/NEWCREAMY-(1).jpg.jpeg';
 import newSpicy from '../assets/NEWSPICY1-(1).jpg.jpeg';
 
+import femaleCheesy from '../assets/femalecheesysnack.png';
+import femaleSpicy from '../assets/femalespicysnack.png';
+import maleLovable from '../assets/malelovablesnack.png';
+import maleSassy from '../assets/malesassysnack.png';
+import maleSmooth from '../assets/malesmoothsnack.png';
+
 // Munch It Crunchy Stick Icon
 const MunchItStickIcon = ({ className = "" }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] ${className}`}>
@@ -57,15 +63,26 @@ const getFallbackResult = (answers) => {
   };
 };
 
-// Returns the NEW full poster image for each personality
-const getResultImage = (key) => {
-  switch(key) {
-    case 'A': return newCheesy;
-    case 'B': return newSweet;
-    case 'C': return newSour;
-    case 'D': return newCreamy;
-    case 'E': return newSpicy;
-    default: return newSweet;
+// Returns the NEW full poster image for each personality based on gender
+const getResultImage = (key, gender) => {
+  if (gender === 'male') {
+    switch(key) {
+      case 'A': return newCheesy;
+      case 'B': return maleLovable;
+      case 'C': return maleSassy;
+      case 'D': return maleSmooth;
+      case 'E': return newSpicy;
+      default: return maleLovable;
+    }
+  } else {
+    switch(key) {
+      case 'A': return femaleCheesy;
+      case 'B': return newSweet;
+      case 'C': return newSour;
+      case 'D': return newCreamy;
+      case 'E': return femaleSpicy;
+      default: return newSweet;
+    }
   }
 };
 
@@ -126,6 +143,39 @@ const ResultPage = () => {
     return state.result || getFallbackResult(state.fallbackAnswers || state.answers);
   }, [state]);
 
+  if (!state || !result) {
+    return <Navigate to="/" replace />;
+  }
+
+  const pKey = result.primaryKey || 'A';
+  const primaryData = personalities[pKey];
+  
+  // Gender state (use robust template-based override, detectedGender, sessionStorage fallback, or default)
+  const [gender, setGender] = useState(() => {
+    // 1. First, check if backend returned the exact template filename used (via navigate state)
+    const tplFromState = state?.actualTemplate || sessionStorage.getItem('actual_template');
+    if (tplFromState) {
+      const tpl = tplFromState.toLowerCase();
+      if (tpl.includes('male')) return 'male';
+      if (tpl.includes('female')) return 'female';
+    }
+    
+    // 2. Check detectedGender from state or sessionStorage
+    const genderFromState = state?.detectedGender;
+    const genderFromStorage = sessionStorage.getItem('detected_gender');
+    const detectedG = (genderFromState && genderFromState !== 'unknown') ? genderFromState : genderFromStorage;
+    if (detectedG && detectedG !== 'unknown') {
+      return detectedG;
+    }
+    
+    // 3. Fallback logic
+    return (pKey === 'A' || pKey === 'E') ? 'male' : 'female';
+  });
+
+  const resultImage = getResultImage(pKey, gender);
+  const adjective = getPersonalityAdjective(pKey);
+  const theme = getPersonalityTheme(pKey);
+
   // Modal States
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [step, setStep] = useState('register'); // 'register' | 'otp' | 'customize'
@@ -142,10 +192,49 @@ const ResultPage = () => {
   const [rotateVal, setRotateVal] = useState(0);
   const [cardScale, setCardScale] = useState(0.85); // default scale set to 85% to see background poster more!
 
+  // AI Face Swap States
+  const [swappedImage, setSwappedImage] = useState(state?.swappedImageUrl || null);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [isSwapping, setIsSwapping] = useState(false);
+  const [swapProgress, setSwapProgress] = useState('');
+  const [rawSelfieFile, setRawSelfieFile] = useState(null);
+
   // Status indicators
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Since the user replaced all 5 mockup templates with clean images, we no longer need the isFullMockup concept.
+  // Every result poster is now a clean template and needs generated descriptions, stats, and buttons.
+  const isFullMockup = false;
+
+  const getTemplateFilename = (key, currentGender) => {
+    if (currentGender === 'male') {
+      switch(key) {
+        case 'A': return 'NEWCHEESY-(1).jpg.jpeg';
+        case 'B': return 'malelovablesnack.png';
+        case 'C': return 'malesassysnack.png';
+        case 'D': return 'malesmoothsnack.png';
+        case 'E': return 'NEWSPICY1-(1).jpg.jpeg';
+        default: return 'malelovablesnack.png';
+      }
+    } else {
+      switch(key) {
+        case 'A': return 'femalecheesysnack.png';
+        case 'B': return 'NEWSWEET1.jpg.jpeg';
+        case 'C': return 'NEWSOUR-CREAM.jpg.jpeg';
+        case 'D': return 'NEWCREAMY-(1).jpg.jpeg';
+        case 'E': return 'femalespicysnack.png';
+        default: return 'NEWSWEET1.jpg.jpeg';
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (pKey) {
+      setSelectedTemplate(getTemplateFilename(pKey, gender));
+    }
+  }, [pKey, gender]);
 
   useEffect(() => {
     const userStr = sessionStorage.getItem('verified_user');
@@ -161,22 +250,233 @@ const ResultPage = () => {
     }
   }, [isShareModalOpen]);
 
-  if (!result) {
-    return <Navigate to="/" replace />;
-  }
+  // (Already declared at top of component)
 
-  const pKey = result.primaryKey || 'A';
-  const primaryData = personalities[pKey];
-  const resultImage = getResultImage(pKey);
-  const adjective = getPersonalityAdjective(pKey);
-  const theme = getPersonalityTheme(pKey);
+  const handleNativeShare = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const imgUrl = swappedImage || resultImage;
+      if (!imgUrl) return;
 
-  const handleNativeShare = () => {
-    // Open customize card creator directly (OTP bypassed for dev testing!)
-    setIsShareModalOpen(true);
-    setStep('customize');
-    if (!name) {
-      setName('Munch It Tester');
+      // 1. Create a high-res social story canvas (1080 x 1920)
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+
+      // 2. Load the background image
+      const bgImg = new Image();
+      bgImg.crossOrigin = "anonymous";
+      bgImg.src = imgUrl;
+
+      await new Promise((resolve, reject) => {
+        bgImg.onload = resolve;
+        bgImg.onerror = () => reject(new Error('Failed to load background image'));
+      });
+
+      // 3. Draw Background image full-bleed
+      ctx.drawImage(bgImg, 0, 0, 1080, 1920);
+
+      // 4. Draw Dark Overlay Gradient at the bottom for readability
+      const grad = ctx.createLinearGradient(0, 700, 0, 1920);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(0.2, 'rgba(0, 0, 0, 0.7)');
+      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.93)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.98)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 700, 1080, 1220);
+
+      // Helper for rounded rectangles
+      const drawRoundRect = (c, x, y, w, h, r, fill = true, stroke = false) => {
+        c.beginPath();
+        c.moveTo(x + r, y);
+        c.lineTo(x + w - r, y);
+        c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r);
+        c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h);
+        c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r);
+        c.quadraticCurveTo(x, y, x + r, y);
+        c.closePath();
+        if (fill) c.fill();
+        if (stroke) c.stroke();
+      };
+
+      // 5. Draw Flavour Analysis (Description Card)
+      const descX = 80;
+      const descY = 1000;
+      const descW = 920;
+      const descH = 260;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(ctx, descX, descY, descW, descH, 30, true, true);
+
+      // "✨ YOUR FLAVOUR ANALYSIS" Header
+      ctx.fillStyle = '#E10B7E'; // Pink brand color
+      ctx.font = '900 22px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('✨ YOUR FLAVOUR ANALYSIS', descX + 40, descY + 35);
+
+      // Paragraph Text
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.font = '500 24px sans-serif';
+      
+      const wrapText = (c, text, x, y, maxWidth, lineHeight) => {
+        const words = text.split(' ');
+        let line = '';
+        for (let n = 0; n < words.length; n++) {
+          let testLine = line + words[n] + ' ';
+          let metrics = c.measureText(testLine);
+          let testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            c.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        c.fillText(line, x, y);
+      };
+
+      wrapText(ctx, primaryData.description, descX + 40, descY + 85, descW - 80, 36);
+
+      // 6. Draw Two-Column Section (Stats Card & Matches)
+      const colY = 1290;
+      const statsW = 510;
+      const statsH = 430;
+      
+      // Stats Card
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(ctx, 80, colY, statsW, statsH, 30, true, true);
+
+      // "🔥 YOUR FLAVOUR STATS" Header
+      ctx.fillStyle = '#E10B7E';
+      ctx.font = '900 20px sans-serif';
+      ctx.fillText('🔥 YOUR FLAVOUR STATS', 120, colY + 35);
+
+      // Progress bars
+      const statItems = [
+        { label: 'CONFIDENCE', icon: '🔥', val: primaryData.stats.confidence, color: '#E30613' },
+        { label: 'CHAOS', icon: '⚡', val: primaryData.stats.chaos, color: '#FFF200' },
+        { label: 'PATIENCE', icon: '⏳', val: primaryData.stats.patience, color: '#00E676' },
+        { label: 'ROMANCE', icon: '💖', val: primaryData.stats.romance, color: '#E10B7E' }
+      ];
+
+      statItems.forEach((stat, idx) => {
+        const itemY = colY + 95 + idx * 80;
+        
+        // Stat name & icon
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = '900 18px sans-serif';
+        ctx.fillText(`${stat.label} ${stat.icon}`, 120, itemY);
+
+        // Bar background
+        const barX = 120;
+        const barY = itemY + 28;
+        const barW = 310;
+        const barH = 14;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        drawRoundRect(ctx, barX, barY, barW, barH, 7, true, false);
+
+        // Bar fill
+        const fillW = (stat.val / 100) * barW;
+        ctx.fillStyle = stat.color;
+        drawRoundRect(ctx, barX, barY, fillW, barH, 7, true, false);
+
+        // Percentage text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '900 18px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${stat.val}%`, 120 + barW, itemY);
+        ctx.textAlign = 'left'; // Reset
+      });
+
+      // Best Match Card
+      const matchX = 610;
+      const matchW = 390;
+      const matchH = 200;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(ctx, matchX, colY, matchW, matchH, 30, true, true);
+
+      ctx.fillStyle = '#FFF200'; // Yellow
+      ctx.font = '900 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('BEST MATCH', matchX + matchW/2, colY + 35);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 24px sans-serif';
+      ctx.fillText(primaryData.bestMatch.toUpperCase(), matchX + matchW/2, colY + 95);
+
+      ctx.font = '28px sans-serif';
+      ctx.fillText('💖', matchX + matchW - 50, colY + matchH - 50);
+
+      // Toxic Combo Card
+      const toxicY = colY + 230;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(ctx, matchX, toxicY, matchW, matchH, 30, true, true);
+
+      ctx.fillStyle = '#E30613'; // Red
+      ctx.font = '900 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('TOXIC COMBO', matchX + matchW/2, toxicY + 35);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 24px sans-serif';
+      ctx.fillText(primaryData.toxicCombo.toUpperCase(), matchX + matchW/2, toxicY + 95);
+
+      ctx.font = '28px sans-serif';
+      ctx.fillText('😒', matchX + matchW - 50, toxicY + matchH - 50);
+
+      // 7. Footer Watermark
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = '900 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MUNCH IT SNACK PERSONALITY QUIZ', 540, 1800);
+
+      // Export canvas as image blob and download
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `munchit_${adjective.toLowerCase()}_snack_poster.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (err) {
+      console.error('Error sharing/downloading poster:', err);
+      // Fallback: download original swapped image if canvas drawing fails
+      try {
+        const fallbackResponse = await fetch(swappedImage || resultImage);
+        const fallbackBlob = await fallbackResponse.blob();
+        const fallbackUrl = window.URL.createObjectURL(fallbackBlob);
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = fallbackUrl;
+        fallbackLink.download = `munchit_${adjective.toLowerCase()}_snack_result.png`;
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        document.body.removeChild(fallbackLink);
+        window.URL.revokeObjectURL(fallbackUrl);
+      } catch (fallbackErr) {
+        window.open(swappedImage || resultImage, '_blank');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -298,11 +598,75 @@ const ResultPage = () => {
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setRawSelfieFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setUserImage(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRunFaceSwap = async () => {
+    if (!rawSelfieFile) {
+      setError('Please choose a selfie photo first');
+      return;
+    }
+    setIsSwapping(true);
+    setError('');
+    setSwapProgress('Uploading selfie...');
+
+    const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+    const formData = new FormData();
+    formData.append('image', rawSelfieFile);
+    formData.append('targetTemplate', selectedTemplate);
+
+    const progressMessages = [
+      'Detecting face landmarks...',
+      'Mapping facial geometry...',
+      'Transferring identity...',
+      'Matching color tone...',
+      'Applying unsharp sharpening...'
+    ];
+    let msgIdx = 0;
+    const progressInterval = setInterval(() => {
+      if (msgIdx < progressMessages.length) {
+        setSwapProgress(progressMessages[msgIdx]);
+        msgIdx++;
+      }
+    }, 1800);
+
+    try {
+      const response = await axios.post(`${apiUrl}/api/face-swap/swap`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      clearInterval(progressInterval);
+
+      if (response.data && response.data.swappedImageUrl) {
+        const swappedUrl = `${apiUrl}${response.data.swappedImageUrl}`;
+        setSwappedImage(swappedUrl);
+
+        // Auto-toggle active gender view if AI detected a valid gender
+        if (response.data.detectedGender && response.data.detectedGender !== 'unknown') {
+          const detected = response.data.detectedGender;
+          setGender(detected);
+          setSelectedTemplate(getTemplateFilename(pKey, detected));
+        }
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+      } else {
+        setError('Face swap failed. Try another photo.');
+      }
+    } catch (err) {
+      clearInterval(progressInterval);
+      console.error('[FaceSwap] error:', err);
+      setError(err.response?.data?.error || 'Failed to complete face swap. Verify backend python setup.');
+    } finally {
+      setIsSwapping(false);
+      setSwapProgress('');
     }
   };
 
@@ -318,7 +682,7 @@ const ResultPage = () => {
 
     // 1. Load background poster image
     const bgImg = new Image();
-    bgImg.src = resultImage;
+    bgImg.src = swappedImage || resultImage;
     bgImg.crossOrigin = "anonymous";
     bgImg.onload = () => {
       // Fill canvas with theme gradient background (matches the preview card!)
@@ -522,18 +886,48 @@ const ResultPage = () => {
       {/* ── PHONE CONTAINER ── */}
       <div className="w-full h-screen md:h-[850px] md:max-h-[90vh] md:w-[412px] bg-black md:rounded-[3rem] md:shadow-2xl md:border-[12px] md:border-slate-800 md:relative md:overflow-hidden flex flex-col z-10 transition-all duration-300 relative">
         
+        {/* Premium Loading Spinner */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-3.5"
+            >
+              <div className="w-10 h-10 border-4 border-white/20 border-t-[#FFF200] rounded-full animate-spin"></div>
+              <span className="font-sans font-black text-xs text-[#FFF200] tracking-[0.2em] uppercase animate-pulse">Downloading Card...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Premium Success Banner */}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-8 left-6 right-6 bg-green-500/90 backdrop-blur border border-green-400 text-white py-3 px-5 rounded-2xl z-50 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wider shadow-lg text-center"
+            >
+              <Check size={14} strokeWidth={4} className="text-white animate-bounce" />
+              <span>Card Saved to Downloads!</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Phone Notch */}
         <div className="hidden md:block absolute top-3 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40" />
 
         {/* ── FULL-BLEED POSTER BACKGROUND (Crisp aspect ratio object-contain with theme background to prevent cropping) ── */}
         <div className={`absolute inset-0 z-0 select-none pointer-events-none ${theme.bg}`}>
           <img 
-            src={resultImage} 
+            src={swappedImage || resultImage} 
             alt={`${primaryData.name} Poster`} 
-            className="absolute inset-0 w-full h-full object-contain object-top"
+            className={`absolute inset-0 w-full h-full transition-all duration-300 ${isFullMockup ? 'object-cover object-center' : 'object-contain object-top'}`}
           />
-          {/* Dark bottom gradient overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent z-10" />
+          {/* Dark bottom gradient overlay - Hidden if using full mockup to prevent blacking out built-in cards */}
+          <div className={`absolute bottom-0 left-0 right-0 h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent z-10 transition-opacity duration-300 ${isFullMockup ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
         </div>
 
         {/* ── APP CANVAS ── */}
@@ -543,516 +937,172 @@ const ResultPage = () => {
           <div className="w-full flex-1 min-h-[200px] max-h-[340px] md:min-h-[240px] md:max-h-[280px]" />
 
           {/* ── DESCRIPTION CARD ── */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-black/95 rounded-2xl border border-white/10 p-4 mb-3 relative z-20 w-full text-white shadow-2xl text-left"
-          >
-            <span className="block text-[8px] text-pink-500 uppercase tracking-[0.2em] font-black mb-2 flex items-center gap-1">
-              ✨ YOUR FLAVOUR ANALYSIS
-            </span>
-            <p className="text-[11px] font-medium text-white/90 leading-relaxed font-sans">
-              {primaryData.description}
-            </p>
-          </motion.div>
+          {!isFullMockup && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-black/95 rounded-2xl border border-white/10 p-4 mb-3 relative z-20 w-full text-white shadow-2xl text-left"
+            >
+              <span className="block text-[8px] text-pink-500 uppercase tracking-[0.2em] font-black mb-2 flex items-center gap-1">
+                ✨ YOUR FLAVOUR ANALYSIS
+              </span>
+              <p className="text-[11px] font-medium text-white/90 leading-relaxed font-sans">
+                {primaryData.description}
+              </p>
+            </motion.div>
+          )}
 
           {/* ── TWO-COLUMN SECTION (Stats / Matches) ── */}
-          <div className="grid grid-cols-12 gap-3 mb-4 relative z-20 w-full">
-            
-            {/* Stats Card */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="col-span-7 bg-black/95 rounded-2xl border border-white/10 p-3.5 flex flex-col justify-between shadow-2xl text-white"
-            >
-              <h3 className="font-display font-black text-[9px] text-[#E10B7E] uppercase tracking-[0.15em] mb-2 border-b border-white/10 pb-1 flex items-center gap-1">
-                <Flame size={10} strokeWidth={3} className="text-[#E10B7E]" />
-                YOUR FLAVOUR STATS
-              </h3>
+          {!isFullMockup && (
+            <div className="grid grid-cols-12 gap-3 mb-4 relative z-20 w-full">
               
-              <div className="space-y-3">
-                {[
-                  { label: 'CONFIDENCE', icon: '🔥', val: primaryData.stats.confidence, color: 'bg-[#E30613]' },
-                  { label: 'CHAOS', icon: '⚡', val: primaryData.stats.chaos, color: 'bg-[#FFF200]' },
-                  { label: 'PATIENCE', icon: '⏳', val: primaryData.stats.patience, color: 'bg-[#00E676]' },
-                  { label: 'ROMANCE', icon: '💖', val: primaryData.stats.romance, color: 'bg-[#E10B7E]' }
-                ].map((stat, i) => (
-                  <div key={i} className="flex items-center justify-between gap-1.5 text-[8px] font-black uppercase tracking-wider text-white">
-                    <div className="w-[58px] flex items-center justify-between flex-shrink-0 text-white/90">
-                      <span className="truncate">{stat.label}</span>
-                      <span className="text-[10px] select-none ml-0.5">{stat.icon}</span>
+              {/* Stats Card */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="col-span-7 bg-black/95 rounded-2xl border border-white/10 p-3.5 flex flex-col justify-between shadow-2xl text-white"
+              >
+                <h3 className="font-display font-black text-[9px] text-[#E10B7E] uppercase tracking-[0.15em] mb-2 border-b border-white/10 pb-1 flex items-center gap-1">
+                  <Flame size={10} strokeWidth={3} className="text-[#E10B7E]" />
+                  YOUR FLAVOUR STATS
+                </h3>
+                
+                <div className="space-y-3">
+                  {[
+                    { label: 'CONFIDENCE', icon: '🔥', val: primaryData.stats.confidence, color: 'bg-[#E30613]' },
+                    { label: 'CHAOS', icon: '⚡', val: primaryData.stats.chaos, color: 'bg-[#FFF200]' },
+                    { label: 'PATIENCE', icon: '⏳', val: primaryData.stats.patience, color: 'bg-[#00E676]' },
+                    { label: 'ROMANCE', icon: '💖', val: primaryData.stats.romance, color: 'bg-[#E10B7E]' }
+                  ].map((stat, i) => (
+                    <div key={i} className="flex items-center justify-between gap-1.5 text-[8px] font-black uppercase tracking-wider text-white">
+                      <div className="w-[58px] flex items-center justify-between flex-shrink-0 text-white/90">
+                        <span className="truncate">{stat.label}</span>
+                        <span className="text-[10px] select-none ml-0.5">{stat.icon}</span>
+                      </div>
+                      
+                      <div className="flex-1 bg-white/10 rounded-full h-2 p-0.5 flex items-center">
+                        <motion.div 
+                          className={`h-1 rounded-full ${stat.color}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${stat.val}%` }}
+                          transition={{ duration: 0.8, delay: 0.4 + (i * 0.1), ease: "easeOut" }}
+                        />
+                      </div>
+                      
+                      <span className="w-5 text-right flex-shrink-0 text-[8px] text-white font-black">{stat.val}%</span>
                     </div>
-                    
-                    <div className="flex-1 bg-white/10 rounded-full h-2 p-0.5 flex items-center">
-                      <motion.div 
-                        className={`h-1 rounded-full ${stat.color}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.val}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 + (i * 0.1), ease: "easeOut" }}
-                      />
-                    </div>
-                    
-                    <span className="w-5 text-right flex-shrink-0 text-[8px] text-white font-black">{stat.val}%</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Match Cards */}
+              <div className="col-span-5 flex flex-col gap-3">
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="bg-black/95 rounded-2xl border border-white/10 p-2.5 text-center flex flex-col items-center justify-center flex-1 shadow-2xl relative"
+                >
+                  <span className="block text-[6.5px] text-munchit-yellow uppercase tracking-[0.15em] font-black mb-0.5">BEST MATCH</span>
+                  <span className="block text-[9.5px] font-display font-black uppercase text-white leading-tight">
+                    {primaryData.bestMatch}
+                  </span>
+                  <span className="text-sm select-none absolute right-1.5 bottom-1.5 filter drop-shadow">💖</span>
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-black/95 rounded-2xl border border-white/10 p-2.5 text-center flex flex-col items-center justify-center flex-1 shadow-2xl relative"
+                >
+                  <span className="block text-[6.5px] text-red-500 uppercase tracking-[0.15em] font-black mb-0.5">TOXIC COMBO</span>
+                  <span className="block text-[9.5px] font-display font-black uppercase text-white leading-tight">
+                    {primaryData.toxicCombo}
+                  </span>
+                  <span className="text-sm select-none absolute right-1.5 bottom-1.5 filter drop-shadow">😒</span>
+                </motion.div>
               </div>
-            </motion.div>
 
-            {/* Match Cards */}
-            <div className="col-span-5 flex flex-col gap-3">
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-                className="bg-black/95 rounded-2xl border border-white/10 p-2.5 text-center flex flex-col items-center justify-center flex-1 shadow-2xl relative"
-              >
-                <span className="block text-[6.5px] text-munchit-yellow uppercase tracking-[0.15em] font-black mb-0.5">BEST MATCH</span>
-                <span className="block text-[9.5px] font-display font-black uppercase text-white leading-tight">
-                  {primaryData.bestMatch}
-                </span>
-                <span className="text-sm select-none absolute right-1.5 bottom-1.5 filter drop-shadow">💖</span>
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-black/95 rounded-2xl border border-white/10 p-2.5 text-center flex flex-col items-center justify-center flex-1 shadow-2xl relative"
-              >
-                <span className="block text-[6.5px] text-red-500 uppercase tracking-[0.15em] font-black mb-0.5">TOXIC COMBO</span>
-                <span className="block text-[9.5px] font-display font-black uppercase text-white leading-tight">
-                  {primaryData.toxicCombo}
-                </span>
-                <span className="text-sm select-none absolute right-1.5 bottom-1.5 filter drop-shadow">😒</span>
-              </motion.div>
             </div>
-
-          </div>
+          )}
 
           {/* ── ACTIONS ── */}
-          <motion.div 
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-auto flex flex-col gap-3.5 w-full relative z-20"
-          >
-            
-            <div className="grid grid-cols-2 gap-3.5 w-full">
-              {/* SHARE RESULT (Card Creator trigger) */}
-              <button
-                onClick={handleNativeShare}
-                className="bg-black hover:bg-zinc-900 border-2 border-[#FFF200] text-[#FFF200] rounded-full py-3 px-4 font-sans font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-[2px_2px_0_0_#000] cursor-pointer"
-              >
-                <span>SHARE RESULT</span>
-                <Share2 size={13} />
-              </button>
-
-              {/* TAG A FRIEND */}
-              <button
-                onClick={handleTagFriend}
-                className="bg-black hover:bg-zinc-900 border-2 border-[#FFF200] text-[#FFF200] rounded-full py-3 px-4 font-sans font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-[2px_2px_0_0_#000] cursor-pointer"
-              >
-                <span>TAG A FRIEND</span>
-                <span>➔</span>
-              </button>
-            </div>
-
-            {/* TAKE AGAIN */}
-            <button
-              onClick={() => navigate('/')}
-              className="text-[10px] font-black text-white/40 hover:text-white/70 mt-1 uppercase tracking-[0.2em] flex items-center justify-center gap-1.5 mx-auto transition-colors active:scale-95 py-1 cursor-pointer"
+          {!isFullMockup && (
+            <motion.div 
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-auto flex flex-col gap-3.5 w-full relative z-20"
             >
-              <RefreshCw size={10} strokeWidth={3} />
-              <span>TAKE QUIZ AGAIN</span>
-            </button>
-          </motion.div>
+              
+              <div className="grid grid-cols-2 gap-3.5 w-full">
+                {/* SHARE RESULT (Card Creator trigger) */}
+                <button
+                  onClick={handleNativeShare}
+                  className="bg-black hover:bg-zinc-900 border-2 border-[#FFF200] text-[#FFF200] rounded-full py-3 px-4 font-sans font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-[2px_2px_0_0_#000] cursor-pointer"
+                >
+                  <span>SHARE RESULT</span>
+                  <Share2 size={13} />
+                </button>
+
+                {/* TAG A FRIEND */}
+                <button
+                  onClick={handleTagFriend}
+                  className="bg-black hover:bg-zinc-900 border-2 border-[#FFF200] text-[#FFF200] rounded-full py-3 px-4 font-sans font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-[2px_2px_0_0_#000] cursor-pointer"
+                >
+                  <span>TAG A FRIEND</span>
+                  <span>➔</span>
+                </button>
+              </div>
+
+              {/* TAKE AGAIN */}
+              <button
+                onClick={() => navigate('/')}
+                className="text-[10px] font-black text-white/40 hover:text-white/70 mt-1 uppercase tracking-[0.2em] flex items-center justify-center gap-1.5 mx-auto transition-colors active:scale-95 py-1 cursor-pointer"
+              >
+                <RefreshCw size={10} strokeWidth={3} />
+                <span>TAKE QUIZ AGAIN</span>
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── DYNAMIC INVISIBLE OVERLAY BUTTONS (For full mockups where buttons are built-in to the background image) ── */}
+          {isFullMockup && (
+            <>
+              {/* Invisible Overlay for SHARE RESULT and TAG A FRIEND (Positioned exactly over the printed buttons, with generous clickable height) */}
+              <div className="absolute bottom-[90px] left-[20px] right-[20px] z-30 flex flex-col items-center pointer-events-none">
+                <div className="grid grid-cols-2 gap-3.5 w-full h-[60px]">
+                  <button
+                    onClick={handleNativeShare}
+                    className="w-full h-full bg-transparent border-none outline-none cursor-pointer pointer-events-auto rounded-full"
+                    aria-label="Share Result"
+                    title="Share Result"
+                  />
+                  <button
+                    onClick={handleTagFriend}
+                    className="w-full h-full bg-transparent border-none outline-none cursor-pointer pointer-events-auto rounded-full"
+                    aria-label="Tag a Friend"
+                    title="Tag a Friend"
+                  />
+                </div>
+              </div>
+              
+              {/* Invisible Overlay for 'TAKE QUIZ AGAIN' link */}
+              <button
+                onClick={() => navigate('/')}
+                className="absolute bottom-[40px] left-1/2 transform -translate-x-1/2 w-48 h-[36px] bg-transparent border-none outline-none cursor-pointer pointer-events-auto z-30 rounded"
+                aria-label="Take Quiz Again"
+                title="Take Quiz Again"
+              />
+            </>
+          )}
 
         </div>
 
       </div>
-
-      {/* ── PREMIUM SHAREABLE CARD CREATOR DRAWER/MODAL ── */}
-      <AnimatePresence>
-        {isShareModalOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 30, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 30, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-gray-900 rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl relative border-4 border-[#FFF200] flex flex-col my-auto max-h-[92%]"
-            >
-              {/* Header */}
-              <div className="bg-[#FFF200] text-black py-4 px-6 flex justify-between items-center select-none">
-                <div className="flex items-center gap-2">
-                  <MunchItStickIcon className="w-5 h-5" />
-                  <span className="font-sans font-black text-sm uppercase tracking-wide">
-                    {step === 'customize' ? 'CARD CUSTOMIZER' : 'VIBE SHARING'}
-                  </span>
-                </div>
-                <button 
-                  onClick={() => setIsShareModalOpen(false)}
-                  className="bg-black/10 hover:bg-black/20 text-black rounded-full p-1.5 transition-colors cursor-pointer"
-                  aria-label="Close"
-                >
-                  <X size={16} strokeWidth={3} />
-                </button>
-              </div>
-
-              {/* Body */}
-              <div className="p-5 overflow-y-auto flex-grow flex flex-col gap-4">
-                
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-500/20 border border-red-500/30 text-red-200 p-3 rounded-xl flex items-start gap-2 text-[10px] font-bold leading-normal text-left"
-                  >
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-400" />
-                    <span>{error}</span>
-                  </motion.div>
-                )}
-
-                {success && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-500/20 border border-green-500/30 text-green-200 p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-center"
-                  >
-                    <Check className="w-4 h-4 text-green-400" strokeWidth={3.5} />
-                    <span>Card Exported Successfully!</span>
-                  </motion.div>
-                )}
-
-                {/* ── STEP 1: Registration Form ── */}
-                {step === 'register' && (
-                  <form onSubmit={handleSendOtp} className="flex flex-col gap-4 text-left">
-                    <p className="text-gray-400 font-bold text-[10.5px] uppercase tracking-wide leading-relaxed">
-                      Register to customize your snack vibe and download your customized card.
-                    </p>
-
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                        <User size={15} />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Your Full Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-gray-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 font-bold text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFF200] focus:border-transparent text-xs"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                        <Phone size={15} />
-                      </div>
-                      <input
-                        type="tel"
-                        placeholder="Phone Number (e.g. 08031234567)"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full bg-gray-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 font-bold text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFF200] focus:border-transparent text-xs"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                      <div className="relative flex items-center mt-0.5">
-                        <input
-                          type="checkbox"
-                          checked={agreed}
-                          onChange={(e) => setAgreed(e.target.checked)}
-                          className="sr-only"
-                          disabled={isLoading}
-                        />
-                        <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${
-                          agreed 
-                            ? 'bg-[#FFF200] border-[#FFF200] text-black' 
-                            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
-                        }`}>
-                          {agreed && <Check size={10} strokeWidth={4} />}
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-bold text-gray-400 leading-tight">
-                        I agree that I am 18+, and accept the terms of use and policies.
-                      </span>
-                    </label>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className={`w-full font-sans font-black text-xs uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                        isLoading
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-[#FFF200] text-black shadow-[0_3px_0_0_#D4C900] active:translate-y-0.5 active:shadow-none'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-gray-600 border-t-black rounded-full animate-spin"></div>
-                          <span>SENDING CODE...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <span>Send Verification OTP</span>
-                          <ArrowRight size={14} strokeWidth={3.5} />
-                        </>
-                      )}
-                    </button>
-
-                    {/* Resilient Skip Bypass */}
-                    <button
-                      type="button"
-                      onClick={handleBypass}
-                      disabled={isLoading}
-                      className="text-[10px] font-black text-[#FFF200] hover:text-yellow-300 hover:underline text-center mt-2 cursor-pointer uppercase tracking-wider disabled:opacity-50"
-                    >
-                      ⚡ Skip SMS verification & create card
-                    </button>
-                  </form>
-                )}
-
-                {/* ── STEP 2: OTP Entry ── */}
-                {step === 'otp' && (
-                  <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4 text-center">
-                    <p className="text-gray-400 font-bold text-[10.5px] uppercase leading-tight">
-                      SMS sent to <span className="text-white font-black">{phoneNumber}</span>. Enter code below:
-                    </p>
-
-                    <div className="max-w-[150px] mx-auto w-full">
-                      <input
-                        type="text"
-                        maxLength="4"
-                        placeholder="• • • •"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                        className="w-full text-center tracking-[0.5em] font-black text-2xl border-2 border-gray-700 rounded-xl py-3 focus:outline-none focus:border-[#FFF200] transition-all bg-gray-800 text-white font-sans"
-                        disabled={isLoading}
-                        autoFocus
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className={`w-full font-sans font-black text-xs uppercase rounded-full py-3.5 px-6 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                        isLoading
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-munchit-red text-white shadow-[0_3px_0_0_#9E040C] active:translate-y-0.5 active:shadow-none'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                          <span>VERIFYING...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <span>VERIFY & VIEW CREATOR</span>
-                          <Check size={14} strokeWidth={3.5} />
-                        </>
-                      )}
-                    </button>
-
-                    {/* Resilient Skip Bypass */}
-                    <button
-                      type="button"
-                      onClick={handleBypass}
-                      disabled={isLoading}
-                      className="text-[10px] font-black text-[#FFF200] hover:text-yellow-300 hover:underline text-center mt-2 cursor-pointer uppercase tracking-wider disabled:opacity-50"
-                    >
-                      ⚡ Delay? Skip Verification
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOtpSent(false);
-                        setOtpCode('');
-                        setError('');
-                        setStep('register');
-                      }}
-                      disabled={isLoading}
-                      className="text-[9px] font-bold text-gray-500 hover:text-gray-400 mt-1 uppercase cursor-pointer tracking-wider"
-                    >
-                      ← Edit details
-                    </button>
-                  </form>
-                )}
-
-                {/* ── STEP 3: Customize Card & Photo Upload ── */}
-                {step === 'customize' && (
-                  <div className="flex flex-col gap-4">
-                    
-                    {/* Live Preview Container */}
-                    <div className="relative w-full aspect-square bg-black border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-end p-4 shadow-inner">
-                      {/* Base Poster Background */}
-                      <img 
-                        src={resultImage} 
-                        alt="Poster" 
-                        className="absolute inset-0 w-full h-full object-contain opacity-60 z-0 select-none pointer-events-none"
-                      />
-                      
-                      {/* Polaroid Frame Container (scaled dynamically) */}
-                      <div 
-                        className="relative bg-white rounded-lg p-2.5 shadow-2xl mx-auto z-10 flex flex-col justify-between"
-                        style={{
-                          width: '180px',
-                          height: '210px',
-                          transform: `scale(${cardScale})`,
-                          transformOrigin: 'center',
-                          transition: 'transform 0.1s ease-out'
-                        }}
-                      >
-                        
-                        {/* Frame Photo Area */}
-                        <div className="w-full aspect-square bg-gray-200 rounded overflow-hidden relative flex items-center justify-center">
-                          {userImage ? (
-                            <div 
-                              className="w-full h-full relative"
-                              style={{
-                                transform: `rotate(${rotateVal}deg) scale(${zoom})`,
-                                transition: 'transform 0.1s ease-out'
-                              }}
-                            >
-                              <img 
-                                src={userImage} 
-                                alt="User upload" 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-[8px] font-bold text-gray-400 text-center uppercase p-1">No Photo</span>
-                          )}
-                        </div>
-
-                        {/* Frame text details */}
-                        <div className="text-center select-none pt-1">
-                          <p className="text-[9px] font-black text-black leading-none truncate">
-                            {name.toUpperCase()}'S SNACK VIBE
-                          </p>
-                          <p className="text-[7.5px] font-black italic text-munchit-red leading-tight truncate mt-0.5">
-                            "THE {adjective.toUpperCase()}"
-                          </p>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* Interactive Tools */}
-                    <div className="flex flex-col gap-2.5 bg-gray-800/80 p-3 rounded-2xl border border-gray-700/50">
-                      <div className="flex justify-between items-center gap-3">
-                        <label 
-                          htmlFor="card-photo-upload" 
-                          className="flex items-center gap-1.5 bg-[#FFF200] hover:bg-yellow-400 text-black font-sans font-black text-[10px] px-3.5 py-2.5 rounded-full uppercase cursor-pointer tracking-wider"
-                        >
-                          <Upload size={12} strokeWidth={3} />
-                          <span>Choose Photo</span>
-                        </label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoSelect}
-                          className="hidden"
-                          id="card-photo-upload"
-                        />
-
-                        {/* Adjust tools */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
-                            className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full cursor-pointer transition-colors"
-                            title="Zoom Out"
-                          >
-                            <Minus size={12} strokeWidth={3} />
-                          </button>
-                          <span className="text-[10px] font-bold text-gray-300 w-8 text-center">{Math.round(zoom * 100)}%</span>
-                          <button
-                            onClick={() => setZoom(prev => Math.min(3, prev + 0.1))}
-                            className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full cursor-pointer transition-colors"
-                            title="Zoom In"
-                          >
-                            <Plus size={12} strokeWidth={3} />
-                          </button>
-                          
-                          <div className="w-[1px] h-6 bg-gray-700 mx-1"></div>
-
-                          <button
-                            onClick={() => setRotateVal(prev => (prev + 15) % 360)}
-                            className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full cursor-pointer transition-colors flex items-center gap-1 text-[10px] font-bold px-2.5"
-                            title="Rotate"
-                          >
-                            <RotateCw size={11} strokeWidth={3} />
-                            <span>15°</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card Size / Scale Slider */}
-                      <div className="flex flex-col gap-1.5 border-t border-gray-700/50 pt-2.5 mt-2">
-                        <div className="flex justify-between items-center text-[9px] font-black uppercase text-gray-400 tracking-wider">
-                          <span>Polaroid Frame Size</span>
-                          <span className="text-[#FFF200]">{Math.round(cardScale * 100)}%</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[9px] font-bold text-gray-500">MIN</span>
-                          <input 
-                            type="range"
-                            min="0.5"
-                            max="1.0"
-                            step="0.05"
-                            value={cardScale}
-                            onChange={(e) => setCardScale(parseFloat(e.target.value))}
-                            className="flex-grow h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-[#FFF200] outline-none"
-                          />
-                          <span className="text-[9px] font-bold text-gray-500">MAX</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Download Button */}
-                    <button
-                      onClick={handleDownloadCard}
-                      disabled={isLoading}
-                      className={`w-full font-sans font-black text-xs uppercase rounded-full py-4 px-6 transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
-                        isLoading
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-[#FFF200] text-black shadow-[0_4px_0_0_#D4C900] active:translate-y-0.5 active:shadow-none'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-gray-600 border-t-black rounded-full animate-spin"></div>
-                          <span>GENERATING HIGH-RES CARD...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download size={14} strokeWidth={3} />
-                          <span>Download customized card</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

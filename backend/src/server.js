@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/index.js';
 import db from './config/db.js'; // Ensure database pool is initialized
+import { downloadTemplates } from './utility/downloadTemplates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,11 @@ app.use(['/api', '/backend/api'], (req, res) => {
 const frontendDistPath = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(frontendDistPath));
 
+// Serve static directories for uploaded faces, swapped results, and templates
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/results', express.static(path.join(__dirname, '../results')));
+app.use('/templates', express.static(path.join(__dirname, '../templates')));
+
 // Health check endpoints
 app.get('/backend', (req, res) => {
   res.json({ status: 'online', message: 'MunchIt API is running' });
@@ -51,6 +57,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
+  // Dynamically sync templates and models from Azure Storage on launch
+  await downloadTemplates();
 });

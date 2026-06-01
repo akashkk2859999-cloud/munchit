@@ -2,3 +2,8 @@ node_modules/
 dist/
 .env
 .DS_Store
+
+# Backend Uploads, Results, and Dynamic Templates
+backend/uploads/
+backend/results/
+backend/templates/

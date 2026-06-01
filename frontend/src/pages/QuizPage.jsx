@@ -47,6 +47,10 @@ const QuizPage = () => {
   const [success, setSuccess] = useState(false);
   const [finalAnswers, setFinalAnswers] = useState(null);
 
+  // Face upload first states
+  const [rawSelfieFile, setRawSelfieFile] = useState(null);
+  const [userImagePreview, setUserImagePreview] = useState(null);
+
   // Initialize verifiedUser if already checked previously
   useEffect(() => {
     const userStr = sessionStorage.getItem('verified_user');
@@ -153,6 +157,56 @@ const QuizPage = () => {
     }
   };
 
+  const uploadAndRunFaceSwap = async (answersObj) => {
+    if (!rawSelfieFile) return { swappedImageUrl: null, detectedGender: 'unknown' };
+
+    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    for (const key in answersObj) {
+      counts[answersObj[key]]++;
+    }
+    let sortedKeys = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    const pKey = sortedKeys[0] || 'A';
+
+    const getBaseTemplateFilename = (key) => {
+      switch(key) {
+        case 'A': return 'NEWCHEESY-(1).jpg.jpeg';
+        case 'B': return 'NEWSWEET1.jpg.jpeg';
+        case 'C': return 'NEWSOUR-CREAM.jpg.jpeg';
+        case 'D': return 'NEWCREAMY-(1).jpg.jpeg';
+        case 'E': return 'NEWSPICY1-(1).jpg.jpeg';
+        default: return 'NEWSWEET1.jpg.jpeg';
+      }
+    };
+    const targetTemplate = getBaseTemplateFilename(pKey);
+
+    const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+    const formData = new FormData();
+    formData.append('image', rawSelfieFile);
+    formData.append('targetTemplate', targetTemplate);
+
+    try {
+      setError('AI generating your personality with your face...');
+      const response = await axios.post(`${apiUrl}/api/face-swap/swap`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const detectedGender = response.data?.detectedGender || 'unknown';
+      const actualTemplate = response.data?.actualTemplate || null;
+      
+      // Persist to sessionStorage so ResultPage can read even on refresh
+      sessionStorage.setItem('detected_gender', detectedGender);
+      if (actualTemplate) sessionStorage.setItem('actual_template', actualTemplate);
+      
+      return {
+        swappedImageUrl: response.data?.swappedImageUrl || null,
+        detectedGender,
+        actualTemplate
+      };
+    } catch (err) {
+      console.error('[FaceSwap] upload first error:', err);
+      return { swappedImageUrl: null, detectedGender: 'unknown', actualTemplate: null };
+    }
+  };
+
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (!otpCode.trim() || otpCode.length < 4) {
@@ -175,16 +229,29 @@ const QuizPage = () => {
           verified: true
         }));
 
+        setError('AI is mapping your face to the flavour poster...');
+        const { swappedImageUrl, detectedGender, actualTemplate } = await uploadAndRunFaceSwap(finalAnswers);
+
         // Submit quiz to backend
         const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
           answers: finalAnswers,
           name: name,
-          phoneNumber: phoneNumber
+          phoneNumber: phoneNumber,
+          swappedImageUrl: swappedImageUrl
         });
 
         setTimeout(() => {
           setIsModalOpen(false);
-          navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+          // Pass the swappedImageUrl, detectedGender and actualTemplate to the result page state
+          navigate('/result', { 
+            state: { 
+              result: submitResponse.data, 
+              answers: finalAnswers,
+              swappedImageUrl: swappedImageUrl ? `${apiUrl}${swappedImageUrl}` : null,
+              detectedGender: detectedGender || 'unknown',
+              actualTemplate: actualTemplate
+            } 
+          });
         }, 1500);
       } catch (err) {
         console.error('[OTP Bypass] Submit error:', err);
@@ -212,16 +279,28 @@ const QuizPage = () => {
           verified: true
         }));
 
+        setError('AI is mapping your face to the flavour poster...');
+        const { swappedImageUrl, detectedGender, actualTemplate } = await uploadAndRunFaceSwap(finalAnswers);
+
         // Submit quiz to backend
         const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
           answers: finalAnswers,
           name: name,
-          phoneNumber: phoneNumber
+          phoneNumber: phoneNumber,
+          swappedImageUrl: swappedImageUrl
         });
 
         setTimeout(() => {
           setIsModalOpen(false);
-          navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+          navigate('/result', { 
+            state: { 
+              result: submitResponse.data, 
+              answers: finalAnswers,
+              swappedImageUrl: swappedImageUrl ? `${apiUrl}${swappedImageUrl}` : null,
+              detectedGender: detectedGender || 'unknown',
+              actualTemplate: actualTemplate
+            } 
+          });
         }, 1500);
       } else {
         setError('Incorrect or expired verification code');
@@ -245,49 +324,14 @@ const QuizPage = () => {
       setSelectedOption(null);
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      const storedUser = sessionStorage.getItem('verified_user');
-      let isVerified = false;
-      let name = null;
-      let phoneNumber = null;
-
-      if (storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser);
-          if (parsed.verified && parsed.name && parsed.phoneNumber) {
-            isVerified = true;
-            name = parsed.name;
-            phoneNumber = parsed.phoneNumber;
-          }
-        } catch (e) {}
-      }
-
-      if (isVerified) {
-        setIsSubmitting(true);
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL || '/backend';
-          const response = await axios.post(`${apiUrl}/api/quiz/submit`, { 
-            answers: newAnswers,
-            name: name,
-            phoneNumber: phoneNumber
-          });
-          navigate('/result', { state: { result: response.data, answers: newAnswers } });
-        } catch (error) {
-          console.error('Failed to submit quiz to backend', error);
-          navigate('/result', { state: { fallbackAnswers: newAnswers } });
-        } finally {
-          setIsSubmitting(false);
-        }
-      } else {
-        // Not verified! Open validation modal to authenticate user via Termii SMS OTP
-        setFinalAnswers(newAnswers);
-        setIsModalOpen(true);
-      }
+      setFinalAnswers(newAnswers);
+      setIsModalOpen(true);
     }
   };
 
   const handleBypass = async () => {
     setIsLoading(true);
-    setError('');
+    setError('Uploading selfie & triggering AI face swap...');
     const finalName = name.trim() || 'Munch It Fan';
     const finalPhone = phoneNumber.trim() || '08000000000';
 
@@ -299,14 +343,25 @@ const QuizPage = () => {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '/backend';
+      const { swappedImageUrl, detectedGender, actualTemplate } = await uploadAndRunFaceSwap(finalAnswers);
+
       const submitResponse = await axios.post(`${apiUrl}/api/quiz/submit`, { 
         answers: finalAnswers,
         name: finalName,
-        phoneNumber: finalPhone
+        phoneNumber: finalPhone,
+        swappedImageUrl: swappedImageUrl
       });
 
       setIsModalOpen(false);
-      navigate('/result', { state: { result: submitResponse.data, answers: finalAnswers } });
+      navigate('/result', { 
+        state: { 
+          result: submitResponse.data, 
+          answers: finalAnswers,
+          swappedImageUrl: swappedImageUrl ? `${apiUrl}${swappedImageUrl}` : null,
+          detectedGender: detectedGender || 'unknown',
+          actualTemplate: actualTemplate
+        } 
+      });
     } catch (err) {
       console.error('Bypass submit error:', err);
       navigate('/result', { state: { fallbackAnswers: finalAnswers } });
@@ -595,7 +650,7 @@ const QuizPage = () => {
                 YOUR VIBE IS READY!
               </h3>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 leading-normal">
-                Verify your phone number to reveal your Munch It snack personality.
+                Upload your photo & verify to instantly reveal your face-swapped Munch It snack personality.
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -703,6 +758,36 @@ const QuizPage = () => {
                           required
                           disabled={isLoading}
                         />
+                      </div>
+
+                      {/* Premium Selfie Upload First Input */}
+                      <div className="flex flex-col gap-1.5 text-left border-t border-gray-100 pt-3">
+                        <span className="text-[9.5px] font-black text-slate-500 uppercase tracking-wide pl-1">
+                          Upload Selfie Photo (For AI Face Swap):
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setRawSelfieFile(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setUserImagePreview(reader.result);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00D2D3]"
+                          required
+                          disabled={isLoading}
+                        />
+                        {userImagePreview && (
+                          <div className="mt-1 w-14 h-14 rounded-full overflow-hidden border-2 border-[#00D2D3] mx-auto shadow-md">
+                            <img src={userImagePreview} alt="Selfie preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                       </div>
 
                       {/* Agree Checkbox with clickable links inside */}
