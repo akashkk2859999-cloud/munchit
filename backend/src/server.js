@@ -88,9 +88,33 @@ app.listen(PORT, async () => {
     await downloadTemplates();
     isSystemReady = true;
     console.log('🚀 MunchIt Backend is fully ready to handle face swap requests!');
+console.log('🔔 System ready flag set to true; entering steady state.');
   } catch (err) {
     console.error('❌ Failed to run template/model synchronizer on launch:', err.message);
     // Fall back to ready state so local developers without Azure credentials are not blocked
     isSystemReady = true;
+    console.error('⚠️ System marked ready despite errors; pod will stay alive but may be missing resources.');
   }
+});
+
+// Graceful shutdown / crash logging
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received – shutting down gracefully');
+  // Give the server a moment to finish ongoing requests
+  setTimeout(() => process.exit(0), 3000);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received – shutting down gracefully');
+  setTimeout(() => process.exit(0), 3000);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught Exception – causing pod crash:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 Unhandled Promise Rejection – causing pod crash:', reason);
+  process.exit(1);
 });
