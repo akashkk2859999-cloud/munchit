@@ -42,6 +42,28 @@ app.get('/backend', (req, res) => {
   res.json({ status: 'online', message: 'MunchIt API is running' });
 });
 
+// Production Diagnostics Endpoint
+import { exec } from 'child_process';
+app.get(['/api/diagnostics', '/backend/api/diagnostics'], (req, res) => {
+  exec('python3 --version || python --version || py --version', (pythonErr, pythonStdout, pythonStderr) => {
+    const pythonVersion = pythonStdout || pythonStderr || 'none';
+    exec('which python3 || which python || which py || whereis python', (pathErr, pathStdout, pathStderr) => {
+      const pythonPath = pathStdout || pathStderr || 'none';
+      exec('pip3 list || pip list', (pipErr, pipStdout, pipStderr) => {
+        const pipList = pipStdout || pipStderr || 'none';
+        res.json({
+          platform: process.platform,
+          arch: process.arch,
+          nodeVersion: process.version,
+          pythonVersion: pythonVersion.trim(),
+          pythonPath: pythonPath.trim(),
+          pipList: pipList.substring(0, 1000)
+        });
+      });
+    });
+  });
+});
+
 // Catch-all for React SPA routing - serves index.html for any unmatched non-API requests
 app.use((req, res) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
