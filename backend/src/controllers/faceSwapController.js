@@ -126,6 +126,14 @@ const executeSwapJob = async (job) => {
       windowsHide: true,
     });
 
+    pythonProcess.on('error', (err) => {
+      activeJobs--;
+      console.error(`❌ [FaceSwap] Failed to spawn Python process:`, err.message);
+      jobStore.set(jobId, { status: 'failed', error: `Failed to spawn Python process: ${err.message}` });
+      reject(new Error(`Failed to spawn Python process: ${err.message}`));
+      processNextJob();
+    });
+
     let pythonOut = '';
     let pythonErr = '';
 
