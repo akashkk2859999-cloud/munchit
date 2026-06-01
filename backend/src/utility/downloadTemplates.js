@@ -8,21 +8,13 @@ const __dirname = path.dirname(__filename);
 
 const PROJECT_PREFIX = 'munchit-campaign';
 
-/**
- * Downloads a single blob file with automatic retry and stream pipe.
- */
 async function downloadBlobToFile(blockBlobClient, destPath) {
   const dir = path.dirname(destPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  const downloadResponse = await blockBlobClient.download(0);
-  const fileStream = fs.createWriteStream(destPath);
-  await new Promise((resolve, reject) => {
-    downloadResponse.readableStreamBody.pipe(fileStream);
-    fileStream.on('finish', resolve);
-    fileStream.on('error', reject);
-  });
+  // Use Azure SDK's native downloadToFile for low-memory chunked streaming of large files
+  await blockBlobClient.downloadToFile(destPath);
 }
 
 /**

@@ -201,6 +201,27 @@ const executeSwapJob = async (job) => {
  */
 export const handleFaceSwap = async (req, res, next) => {
   try {
+    // Ground-truth check: Ensure ML models are fully downloaded and present on disk before execution
+    const modelDir = path.join(__dirname, '../utility/models');
+    const inswapperPath = path.join(modelDir, 'inswapper_128.onnx');
+    const buffaloPath = path.join(modelDir, 'buffalo_l', '1k3d68.onnx');
+    const inswapperExists = fs.existsSync(inswapperPath) || fs.existsSync(path.join(__dirname, '../utility/inswapper_128.onnx'));
+    const buffaloExists = fs.existsSync(buffaloPath);
+
+    if (!inswapperExists || !buffaloExists) {
+      // Clean up uploaded file if present
+      if (req.file && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupErr) {
+          console.warn('⚠️ Non-blocking cleanup warning:', cleanupErr.message);
+        }
+      }
+      return res.status(503).json({ 
+        error: 'Face-swap AI models are still initializing from Azure Blob Storage. Please try again in a few moments.' 
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No selfie image uploaded' });
     }

@@ -54,6 +54,10 @@ RUN useradd -m nodeuser && chown -R nodeuser:nodeuser /app
 # Copy only the necessary files from the build stage
 COPY --from=build --chown=nodeuser:nodeuser /app /app
 
+# Pre-create all runtime directories and models cache folder with correct non-root permissions
+RUN mkdir -p /app/uploads /app/results /app/templates /app/backend/src/utility/models && \
+    chown -R nodeuser:nodeuser /app/uploads /app/results /app/templates /app/backend/src/utility/models
+
 # Set up Python virtual environment and install pip requirements inside the app directory
 USER nodeuser
 RUN python3 -m venv /app/venv

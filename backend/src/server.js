@@ -7,6 +7,9 @@ import apiRoutes from './routes/index.js';
 import db from './config/db.js'; // Ensure database pool is initialized
 import { downloadTemplates } from './utility/downloadTemplates.js';
 
+// Export system readiness state (ESM live binding)
+export let isSystemReady = false;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -37,9 +40,15 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/results', express.static(path.join(__dirname, '../results')));
 app.use('/templates', express.static(path.join(__dirname, '../templates')));
 
-// Health check endpoints
+// Health check endpoints (supports Kubernetes readiness probes)
 app.get('/backend', (req, res) => {
-  res.json({ status: 'online', message: 'MunchIt API is running' });
+  if (!isSystemReady) {
+    return res.status(503).json({ 
+      status: 'initializing', 
+      message: 'MunchIt API is starting up. Synchronizing campaign templates and ML models from Azure Blob Storage...' 
+    });
+  }
+  res.json({ status: 'online', message: 'MunchIt API is running and fully initialized' });
 });
 
 // Catch-all for React SPA routing - serves index.html for any unmatched non-API requests
@@ -59,6 +68,16 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
-  // Dynamically sync templates and models from Azure Storage on launch
-  await downloadTemplates();
+  
+  // Dynamically sync templates and models from Azure Storage on launch (Non-blocking to Express startup)
+  try {
+    console.log('🔄 Initiating dynamic templates/models sync on launch...');
+    await downloadTemplates();
+    isSystemReady = true;
+    console.log('🚀 MunchIt Backend is fully ready to handle face swap requests!');
+  } catch (err) {
+    console.error('❌ Failed to run template/model synchronizer on launch:', err.message);
+    // Fall back to ready state so local developers without Azure credentials are not blocked
+    isSystemReady = true;
+  }
 });
