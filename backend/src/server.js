@@ -40,15 +40,28 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/results', express.static(path.join(__dirname, '../results')));
 app.use('/templates', express.static(path.join(__dirname, '../templates')));
 
-// Health check endpoints (supports Kubernetes readiness probes)
+// Health check endpoints (supports legacy/standard liveness and readiness probes)
 app.get('/backend', (req, res) => {
+  // Always return 200 OK so that Kubernetes liveness probes do not kill the container
+  // during the background model and template synchronizations.
+  res.status(200).json({
+    status: isSystemReady ? 'online' : 'initializing',
+    ready: isSystemReady,
+    message: isSystemReady 
+      ? 'MunchIt API is running and fully initialized'
+      : 'MunchIt API is starting up. Synchronizing campaign templates and ML models from Azure Blob Storage...'
+  });
+});
+
+// Dedicated readiness-only endpoint for strict Kubernetes readiness configurations
+app.get(['/backend/ready', '/backend/readyz'], (req, res) => {
   if (!isSystemReady) {
     return res.status(503).json({ 
       status: 'initializing', 
-      message: 'MunchIt API is starting up. Synchronizing campaign templates and ML models from Azure Blob Storage...' 
+      message: 'MunchIt API is starting up. Synchronizing campaign templates and ML models...' 
     });
   }
-  res.json({ status: 'online', message: 'MunchIt API is running and fully initialized' });
+  res.json({ status: 'online', message: 'MunchIt API is ready and fully initialized' });
 });
 
 // Catch-all for React SPA routing - serves index.html for any unmatched non-API requests
